@@ -3,7 +3,7 @@
 > **Disclosed demonstration — not a live payroll service.**  
 > ShiftProof is a per-shift USDC escrow demo built with [Arc Studio](https://studio.arc.io). Both the employer and worker wallets are controlled by the builder. No real worker pilot, letter of intent, legal review, or production payroll use is claimed. The contract pays on **employer attestation**, not trustless verification of work. There are no worker fees. Do not use this with real workers until a jurisdiction/legal review and a written pilot agreement exist.
 
-**Status:** Phase 2b. The contract is frozen and tested on Arc Testnet. **No Arc mainnet deployment, transaction, or key access has been made.** C4 is closed and a 40 USDC cap is authorized; Remix + Rabby (Path B) is primary; every mainnet transaction still needs separate approval. The public repo and [Vercel preview](https://shiftproof-e51a9julz-oxunify.vercel.app) are live. The preview is **testnet-only** until mainnet configuration is approved.
+**Status:** Phase 2b. The contract is frozen and tested on Arc Testnet. **No Arc mainnet deployment, transaction, or key access has been made.** C4 is closed and a 40 USDC cap is authorized; Remix + Rabby (Path B) is primary; every mainnet transaction still needs separate approval. The public repo and [Vercel preview](https://shiftproof-gfq9cfdvd-oxunify.vercel.app) are live. The preview is **testnet-only** until mainnet configuration is approved.
 
 **Labels:** `VERIFIED` = directly observed in the linked evidence; `UNVERIFIED` = prepared or inferred but not exercised on mainnet; `UNRESOLVED` = a human decision, external dependency, or open contradiction.
 
@@ -13,7 +13,7 @@ The full claim-to-evidence register is in the [mainnet package](arc-pipeline/04-
 
 | Asset | Value | Status |
 |---|---|---|
-| Hosted preview | [shiftproof-e51a9julz-oxunify.vercel.app](https://shiftproof-e51a9julz-oxunify.vercel.app) | `VERIFIED` deployment; testnet-only |
+| Hosted preview | [shiftproof-gfq9cfdvd-oxunify.vercel.app](https://shiftproof-gfq9cfdvd-oxunify.vercel.app) | `VERIFIED` deployment; testnet-only |
 | Public repo | [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) | `VERIFIED` |
 | Demo video | Not recorded | `UNRESOLVED` |
 | Arc Studio project | [studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | `VERIFIED` URL; public access `UNRESOLVED` |

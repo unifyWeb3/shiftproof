@@ -16,7 +16,7 @@
 | 2 | Both wallets are on Arc Testnet | Chain ID `5042002` in Rabby | Wallet network screenshot |
 | 3 | Both wallets have testnet USDC for gas and escrow | Employer: ≥ 20 USDC; worker: ≥ 1 USDC for gas | Balance screenshot |
 | 4 | Faucet source | Arc Studio sidebar **Get test USDC**, or `https://faucet.circle.com` (testnet only) | Note the source used |
-| 5 | App preview opens | `https://shiftproof-e51a9julz-oxunify.vercel.app` loads; footer says `Arc Testnet · chain 5042002 · testnet only` | Screenshot |
+| 5 | App preview opens | `https://shiftproof-gfq9cfdvd-oxunify.vercel.app` loads; footer says `Arc Testnet · chain 5042002 · testnet only` | Screenshot |
 | 6 | Contract reads match | `nextShiftId` and `totalEscrow` match the explorer/read-only call | Record both values |
 | 7 | Explorer reachable | Contract address opens on `explorer.testnet.arc.io` | Screenshot |
 | 8 | Fresh state | Note the starting `nextShiftId` (call it `N`) and `totalEscrow` (call it `E`) | Record both |

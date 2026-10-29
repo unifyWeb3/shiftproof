@@ -45,7 +45,7 @@ C4 is closed, but execution is not authorized:
 | C2 | Real pilot / LOI | **UNRESOLVED (waived, not satisfied)** | `01-decision.md` amendment 2026-10-27 01:42 UTC. Disclosed builder-wallet demo only. |
 | C3 | Legal scope | **UNRESOLVED (waived, not satisfied)** | Same amendment. No real worker pilot without a jurisdiction check. |
 | C4 | Mainnet route, budget, wallets, funding | **CLOSED 2026-10-29** | C4 closed; 40 USDC cap authorized; every mainnet tx still per-tx approval. Public addresses in the decision file are still `<ADDR>` placeholders; fill from human records. |
-| C5 | Host, repo, builder profile | **PARTIAL** | Builder profile URL exists; public repo live at https://github.com/unifyWeb3/shiftproof; Vercel preview live at https://shiftproof-e51a9julz-oxunify.vercel.app (testnet-only); video pending. |
+| C5 | Host, repo, builder profile | **PARTIAL** | Builder profile URL exists; public repo live at https://github.com/unifyWeb3/shiftproof; Vercel preview live at https://shiftproof-gfq9cfdvd-oxunify.vercel.app (testnet-only); video pending. |
 | C6 | Scope discipline | **VERIFIED for V1 scope** | Attested hours + claim + refund; no disputes/QR/tax/lending. |
 | C7 | Fallback trigger acknowledged | **VERIFIED** | `01-decision.md` §5.1; PartnerRail is not activated. |
 | V1 | Arc Foundry installs | **UNVERIFIED — Path A fallback only** | Install commands prepared; not completed in this environment. Primary Path B does not require it. |
@@ -208,7 +208,7 @@ Only **five bytes** differ across the entire 5,990-byte runtime. The remaining 1
 
 - [ ] **C4 is closed and the actual public addresses are filled in:** deployer, employer, worker, grant recipient (if any), and funding source. The 2026-10-29 amendment closes C4 but still records the three wallets as `<ADDR>` placeholders; do not invent them.
 - [ ] **Spend approval:** the 40 USDC cap is authorized, but no individual mainnet transaction is authorized by this package. Each transaction needs the human’s per-card approval; the deploy also needs a separate deploy approval.
-- [ ] **C5 assets:** public repo `shiftproof` and Vercel preview authorized; preview is live at https://shiftproof-e51a9julz-oxunify.vercel.app; record the repo URL once pushed; builder profile URL exists.
+- [ ] **C5 assets:** public repo `shiftproof` and Vercel preview are live; preview is at https://shiftproof-gfq9cfdvd-oxunify.vercel.app; builder profile URL exists; video pending.
 - [ ] **Feature freeze:** exact commit/tag recorded; `git status` clean; no uncommitted contract or script changes.
 - [ ] **Artifact frozen:** source hash, creation hash, initcode hash, runtime hash, compiler settings recorded in this package.
 - [ ] **Path B ready:** Rabby installed on the human device, Remix compiler/optimizer settings match §2.11, and the constructor argument is entered correctly.
@@ -1191,7 +1191,7 @@ The full claim-to-evidence register is [E24 §8]; unresolved reproducibility gap
 
 | Asset | Value | Status |
 |---|---|---|
-| Hosted app | [shiftproof-e51a9julz-oxunify.vercel.app](https://shiftproof-e51a9julz-oxunify.vercel.app) | `VERIFIED` testnet-only preview |
+| Hosted app | [shiftproof-gfq9cfdvd-oxunify.vercel.app](https://shiftproof-gfq9cfdvd-oxunify.vercel.app) | `VERIFIED` testnet-only preview |
 | Public repo | [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) | `VERIFIED` |
 | Demo video | `⟨VIDEO_URL⟩` | `UNRESOLVED` |
 | Arc Studio project | [studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | `VERIFIED` URL exists; public access `UNRESOLVED` |
@@ -1199,7 +1199,7 @@ The full claim-to-evidence register is [E24 §8]; unresolved reproducibility gap
 | Arc mainnet contract | `⟨MAINNET_CONTRACT⟩` | `UNVERIFIED` — not deployed |
 | Arc mainnet deploy tx | `⟨MAINNET_DEPLOY_TX⟩` | `UNVERIFIED` — not deployed |
 | Source verification | `⟨VERIFICATION_URL⟩` | `UNRESOLVED` |
-| Proof page | [shiftproof-e51a9julz-oxunify.vercel.app/proof](https://shiftproof-e51a9julz-oxunify.vercel.app/proof) | `VERIFIED` testnet-only preview |
+| Proof page | [shiftproof-gfq9cfdvd-oxunify.vercel.app/proof](https://shiftproof-gfq9cfdvd-oxunify.vercel.app/proof) | `VERIFIED` testnet-only preview |
 | Mainnet demo txs | `⟨MAINNET_DEMO_TXS⟩` | `UNVERIFIED` — not run |
 | Arc testnet contract | [`0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6`](https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6) | `VERIFIED` |
 | Arc testnet deploy tx | [`0x89b616d…dcfd52`](https://explorer.testnet.arc.io/tx/0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52) | `VERIFIED` |
