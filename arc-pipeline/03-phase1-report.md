@@ -5,7 +5,7 @@
 **Status:** **Build and testnet deployment complete. Live-USDC end-to-end and explorer source verification remain UNVERIFIED.** This is not a mainnet acceptance and not a claim that a real worker pilot ran.  
 **Studio usage at stop:** `64%` (`03-evidence/usage-final.json`); no Studio turn was run at or after 70%.  
 **Mainnet:** no deployment, no transaction, no key access, no spend.  
-**GitHub:** Phase 1 pushed nothing. Phase 2b published a curated public snapshot at [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) (single commit `3a82e89`); internal `00`–`02` documents are excluded.
+**GitHub:** Phase 1 pushed nothing. Phase 2b published a curated public snapshot at [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) (initial commit `3a82e89`; later doc-only updates on `main`); internal `00`–`02` documents are excluded.
 
 ---
 
@@ -205,8 +205,9 @@ The unresolved items are live-runtime, source-verification, and submission-asset
 - Exact hashes are also recorded in `arc-pipeline/03-evidence/commits.txt`.
 - Phase 1 added no remote and pushed nothing.
 - Phase 2b published a curated public snapshot at
-  [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) as a
-  single commit `3a82e89`; the internal `00`–`02` documents are not included.
+  [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof); the
+  initial commit is `3a82e89`, with later doc-only updates on `main`. The internal
+  `00`–`02` documents are not included.
 
 ---
 
