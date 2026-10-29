@@ -225,7 +225,7 @@ The preview is **testnet-only**. These files contain testnet facts or links and 
 | `app/README.md` | Testnet deployment table and testnet connection instructions; build command is `bunx vite build`. |
 | `app/AGENTS.md` | Testnet deployment/explorer link. |
 | `app/TESTNET-E2E.md` | Arc Testnet fork/RPC/faucet instructions and links. |
-| `app/TESTNET-E2E-LIVE.md` | Live two-wallet testnet checklist; no testnet facts hardcoded in app source. |
+| `app/TESTNET-E2E-LIVE.md` | Live two-wallet testnet checklist; expected results and screenshot points. |
 | `app/src/onchain-facts.ts` | Contains **both** testnet and mainnet facts; generated file, not testnet-only. Verify current before use. |
 
 ## License
