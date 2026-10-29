@@ -1,0 +1,17 @@
+# Local runtime and build output
+app/node_modules/
+app/dist/
+app/lib/
+app/contracts/cache/
+app/contracts/out/*
+!app/contracts/out/ShiftProof.sol/
+!app/contracts/out/ShiftProof.sol/ShiftProof.json
+app/.env
+.env
+
+# Intermediate Studio pull snapshots (the committed app/ tree is the source snapshot)
+arc-pipeline/phase1/studio-*/
+arc-pipeline/phase1/artifacts/
+
+# OS noise
+.DS_Store

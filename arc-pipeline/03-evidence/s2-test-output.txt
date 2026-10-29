@@ -1,0 +1,67 @@
+Reading the test file and interface reference before touching anything. The two failing tests are both in `CreateShiftTest`. The diagnosis is correct:
+
+1. `test_create_max_rate_boundary` — `vm.prank(employer)` is consumed by the `sp.MAX_HOURLY_RATE()` external call on the same line. The fix: read the constant before the prank.
+2. `test_create_rate_above_max_reverts` — `vm.expectRevert` is placed after `vm.prank`, and `vm.expectRevert` itself consumes the prank. The fix: move `vm.expectRevert` before `vm.prank`.
+
+The contract is correct per the spec; no contract changes needed. Now run the full suite. All unit/reentrancy/read tests pass. The runner is still executing the invariant and fuzz suites. Waiting for completion. All 76 tests pass. Updating the todo list and AGENTS.md. **Full test output: 76/76 passed, 0 failed.**
+
+---
+
+**Files changed**
+
+`contracts/test/ShiftProof.t.sol` — two tests in `CreateShiftTest`, lines 185–201.
+
+---
+
+**Fixes applied**
+
+`test_create_max_rate_boundary`
+```solidity
+// Before (broken): prank consumed by the external MAX_HOURLY_RATE() call
+vm.prank(employer);
+uint256 id = sp.createShift(worker, sp.MAX_HOURLY_RATE(), DUR);
+
+// After: constant read into a local before the prank
+uint256 maxRate = sp.MAX_HOURLY_RATE();
+vm.prank(employer);
+uint256 id = sp.createShift(worker, maxRate, DUR);
+```
+
+`test_create_rate_above_max_reverts`
+```solidity
+// Before (broken): vm.expectRevert cheatcode consumed the prank
+vm.prank(employer);
+vm.expectRevert(ShiftProof.InvalidAmount.selector);
+sp.createShift(worker, overRate, DUR);
+
+// After: expectRevert before prank
+vm.expectRevert(ShiftProof.InvalidAmount.selector);
+vm.prank(employer);
+sp.createShift(worker, overRate, DUR);
+```
+
+**No contract changes.** `MAX_HOURLY_RATE` is a `public constant` — it compiles to a view-function call at the ABI boundary, which consumes a `vm.prank`. Both fixes are purely test-harness corrections with no spec implication.
+
+**Suite breakdown:**
+
+| Suite | Tests | Result |
+|---|---|---|
+| ConstructorTest | 5 | PASS |
+| CreateShiftTest | 12 | PASS |
+| ClockInTest | 4 | PASS |
+| ClockOutTest | 3 | PASS |
+| AttestTest | 9 | PASS |
+| ClaimTest | 5 | PASS |
+| RefundTest | 6 | PASS |
+| CancelTest | 4 | PASS |
+| ReadTest | 4 | PASS |
+| DonationTest | 1 | PASS |
+| NoneStateTest | 5 | PASS |
+| DoubleClaimTest | 1 | PASS |
+| DoubleRefundTest | 1 | PASS |
+| TerminalStateTest | 2 | PASS |
+| ReentrancyTest | 3 | PASS |
+| ZeroAttestationTest | 1 | PASS |
+| NoNativeValueTest | 1 | PASS |
+| FuzzTest | 3 | PASS |
+| InvariantTest | 6 | PASS (256 runs × 500 calls each) |

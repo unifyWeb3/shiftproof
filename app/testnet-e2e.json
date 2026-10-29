@@ -1,0 +1,133 @@
+{
+  "network": "Arc Testnet",
+  "chainId": 5042002,
+  "forkRpc": "https://rpc.testnet.arc.io",
+  "testedViaFork": true,
+  "forkLimitation": "Arc USDC (0x3600…0000) calls precompile 0x1800…0001 which does not exist in anvil. Fork tests use MockUSDC + fresh ShiftProof with identical bytecode.",
+  "liveContractAddress": "0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6",
+  "liveUsdcAddress": "0x3600000000000000000000000000000000000000",
+  "forkContractAddress": "0x535b3d7a252fa034ed71f0c53ec0c6f784cb64e1",
+  "forkUsdcAddress": "0x522b3294e6d06aa25ad0f1b8891242e335d3b459",
+  "testedAtBlock": 69264642,
+  "wallets": {
+    "employer": "0x1111111111111111111111111111111111111111",
+    "worker": "0x2222222222222222222222222222222222222222",
+    "third": "0x3333333333333333333333333333333333333333",
+    "note": "Impersonated anvil accounts — no private keys held or stored"
+  },
+  "allPassed": true,
+  "flows": [
+    {
+      "name": "Flow 1: Happy path",
+      "passed": true,
+      "txs": [
+        {
+          "step": "createShift",
+          "hash": "0xe5f630b897d98477d30cc489d20e3a16d3ff6130b1d2204bac6a092c5457308d",
+          "block": 69264630,
+          "gasUsed": 223409
+        },
+        {
+          "step": "clockIn",
+          "hash": "0x783cf4fb494869a01517b791d01698f1e11e6ca08a9f31d74fda2dcc195b13d7",
+          "block": 69264631,
+          "gasUsed": 35901
+        },
+        {
+          "step": "clockOut",
+          "hash": "0xabc86de540a9d3c5cfb68338e576116897971f95ae6097e30612f7c424632299",
+          "block": 69264632,
+          "gasUsed": 36016
+        },
+        {
+          "step": "attest(5400s)",
+          "hash": "0x3485d3a7acd30d0c3b52d72e36d8435f6dee610e69fb3f228b886fee3993d0b1",
+          "block": 69264633,
+          "gasUsed": 63681
+        },
+        {
+          "step": "claim",
+          "hash": "0xdc77263fd0df471b6ffbd0b08dcd8950324c852aa416dfefe58ecfecd7603e2a",
+          "block": 69264634,
+          "gasUsed": 77258
+        },
+        {
+          "step": "refundUnused",
+          "hash": "0x65e5d5a713b996a26c97384ce7bb2c9e71c10c9b3a69b1053e322dda0b16fd49",
+          "block": 69264635,
+          "gasUsed": 52991
+        }
+      ],
+      "shiftId": 1,
+      "finalStatus": "Settled",
+      "finalEscrow": "0",
+      "workerBalanceDelta": "+7.5 USDC",
+      "employerBalanceDelta": "-7.5 USDC"
+    },
+    {
+      "name": "Flow 2: Cancel before clock-in",
+      "passed": true,
+      "txs": [
+        {
+          "step": "createShift",
+          "hash": "0xcced95b9f5873f39e774cf0823f24e9fb6d6d19ebaf5313640fea6901dbbf233",
+          "block": 69264636,
+          "gasUsed": 223397
+        },
+        {
+          "step": "cancel",
+          "hash": "0x4e129af1dbf6f0c24b510407b2e525e3719e27ed93df7fe44543b7eb8fdea50d",
+          "block": 69264637,
+          "gasUsed": 49752
+        }
+      ],
+      "shiftId": 2,
+      "finalStatus": "Cancelled",
+      "finalEscrow": "0",
+      "workerBalanceDelta": "+0 USDC",
+      "employerBalanceDelta": "+0 USDC (net: paid 4, refunded 4)"
+    },
+    {
+      "name": "Flow 3: Zero attestation",
+      "passed": true,
+      "txs": [
+        {
+          "step": "createShift",
+          "hash": "0xe11a4981677cd28e70a55438fcc3b17cb70080b48564925dba08c2f78d59e5d7",
+          "block": 69264638,
+          "gasUsed": 223409
+        },
+        {
+          "step": "clockIn",
+          "hash": "0x3b04b6605eeb6b3a98c7a9363a2013375d41f7ffa632a9218de3f4e27357b9b9",
+          "block": 69264639,
+          "gasUsed": 35901
+        },
+        {
+          "step": "clockOut",
+          "hash": "0x8a6b2228c3e51a396b156ef12df7eb000b808c216fdb47dacae9a99e7ff380ab",
+          "block": 69264640,
+          "gasUsed": 36016
+        },
+        {
+          "step": "attest(0s)",
+          "hash": "0x55015aeb21e6f43f4a5e16830b377604158c18b684a255d9cb4c1b6a41398e41",
+          "block": 69264641,
+          "gasUsed": 40957
+        },
+        {
+          "step": "refundUnused",
+          "hash": "0x03119f2b13771adade41e6282d8899211607c8ecee5c9ed5eb785f270916ba59",
+          "block": 69264642,
+          "gasUsed": 52960
+        }
+      ],
+      "shiftId": 3,
+      "finalStatus": "Settled",
+      "finalEscrow": "0",
+      "workerBalanceDelta": "+0 USDC",
+      "employerBalanceDelta": "+0 USDC (net: paid 3, refunded 3)"
+    }
+  ],
+  "generatedAt": "2026-10-27T02:48:51.484Z"
+}

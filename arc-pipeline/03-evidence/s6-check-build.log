@@ -1,0 +1,20 @@
+Frontend verification, from Studio turn S6 (raw stream: 03-evidence/s6-run.err; summary: 03-evidence/s6-run.json)
+
+$ bun run check
+$ oxlint --type-aware src scripts --fix; s=$?; oxlint --fix .; exit $((s>0?s:$?))
+Found 0 warnings and 0 errors.
+Finished in 1.4s on 29 files with 57 rules using 4 threads.
+Found 0 warnings and 0 errors.
+Finished in 217ms on 32 files with 34 rules using 4 threads.
+$ tsc --noEmit
+[exit 0]
+
+$ bunx vite build
+...
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 17.31s
+
+Result: check passed; production build succeeded. The chunk-size notices are warnings, not errors.

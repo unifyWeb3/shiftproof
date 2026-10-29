@@ -1,0 +1,167 @@
+{
+  "status": "completed",
+  "appId": "35650d11-57a8-4743-8c23-a6bfe1a02f39",
+  "threadId": "eb9d7685-8a8c-4965-9aea-02bb5112bc76",
+  "sandboxId": "iz3ahn6n7rsp1fqfjf525",
+  "finalText": "Reading the contracts skill deploy references before starting. Mode 1 is the default. Reading the deploy-contract-tool reference next, then I'll run tests and deploy. Good. No owner arg needed (ShiftProof has no admin). Running tests then building then deploying. 76/76 pass. Building the artifact now. Build succeeded (no compiler errors, only lint warnings in test files which are fine). Deploying now. Deployed. Now reading back the three view functions and checking the tx. All three read-backs match expectations. Now checking code size and looking up the contract on-chain for block number and deployer. Contract is live with non-empty code. Verification is not available via the explorer API for this deployment. Now writing `deployments.json` and updating `AGENTS.md`. Also update README with the deployed address: All done. Full deployment report:\n\n---\n\n## ShiftProof V1 — Arc Testnet Deployment Report\n\n**Pre-flight:** 76/76 Foundry tests passed, `forge build` clean, artifact fresh.\n\n### On-chain facts\n\n| Field | Value |\n|---|---|\n| Contract address | `0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6` |\n| Transaction hash | `0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52` |\n| Chain ID | `5042002` (Arc Testnet) |\n| Deployed at | 2026-10-27T02:37:43.604Z |\n| Testnet deployer | Platform wallet (testnet-only, disposable, not user-owned) |\n| USDC constructor arg | `0x3600000000000000000000000000000000000000` |\n| Code present | Yes (`deployed: true` confirmed by explorer lookup) |\n\n### Read-back verification\n\n| Call | Returned | Expected |\n|---|---|---|\n| `usdc()` | `0x3600000000000000000000000000000000000000` | canonical Arc USDC |\n| `nextShiftId()` | `1` | starts at 1 per spec |\n| `totalEscrow()` | `0` | no shifts yet |\n\n### Source verification\n\nNot available. The Arc Testnet explorer API did not return verified status for this address. The source is in `contracts/ShiftProof.sol` and the artifact is at `contracts/out/ShiftProof.sol/ShiftProof.json`. Manual verification via the explorer UI at the link below is possible if needed.\n\n### Files updated\n\n- `contracts/contract-metadata/ShiftProof.json` — written by the deploy tool\n- `deployments.json` — new testnet entry\n- `AGENTS.md` — contract state table updated\n- `README.md` — deployed contracts table added\n\nWant to share this app? You can deploy it for free to **Netlify** or **Hugging Face** or **Vercel**. To get started, open the **Integrations** menu in the workbench header (or the **+** menu in the chat toolbar) and choose **Connect Netlify** or **Connect Hugging Face** or **Connect Vercel** to connect your account. Once connected, just say \"deploy this\" and I'll handle the rest.",
+  "todos": [
+    {
+      "id": "todo:run 76-test suite:0",
+      "text": "Run 76-test suite",
+      "status": "done"
+    },
+    {
+      "id": "todo:forge build (artifact freshness):0",
+      "text": "forge build (artifact freshness)",
+      "status": "done"
+    },
+    {
+      "id": "todo:deploy to arc testnet:0",
+      "text": "Deploy to Arc Testnet",
+      "status": "done"
+    },
+    {
+      "id": "todo:read-back usdc/nextshiftid/totalescrow:0",
+      "text": "Read-back usdc/nextShiftId/totalEscrow",
+      "status": "done"
+    },
+    {
+      "id": "todo:write deployments.json + update agents.md:0",
+      "text": "Write deployments.json + update AGENTS.md",
+      "status": "done"
+    }
+  ],
+  "filesChanged": [
+    "AGENTS.md",
+    "README.md",
+    "contracts/contract-metadata/ShiftProof.json",
+    "deployments.json"
+  ],
+  "fileDiffs": [
+    {
+      "path": "AGENTS.md",
+      "action": "edit",
+      "addedLines": 6,
+      "removedLines": 1,
+      "isFragment": true,
+      "truncated": false,
+      "hunk": " ## Contract State\n \n | Contract | Network | Address | Status |\n |---|---|---|---|\n-| ShiftProof | Arc Testnet | - | Not yet deployed |\n+| ShiftProof | Arc Testnet (5042002) | 0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6 | Deployed 2026-10-27 |\n+\n+- Deployer: testnet platform wallet (disposable, not user-owned)\n+- Tx hash: 0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52\n+- Explorer: https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6\n+- Source verification: not available via explorer API at deploy time"
+    },
+    {
+      "path": "deployments.json",
+      "action": "write",
+      "addedLines": 14,
+      "removedLines": 0,
+      "isFragment": false,
+      "truncated": false,
+      "hunk": "+{\n+  \"ShiftProof\": {\n+    \"arcTestnet\": {\n+      \"chainId\": 5042002,\n+      \"network\": \"ARC-TESTNET\",\n+      \"address\": \"0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6\",\n+      \"txHash\": \"0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52\",\n+      \"deployedAt\": \"2026-10-27T02:37:43.604Z\",\n+      \"usdc\": \"0x3600000000000000000000000000000000000000\",\n+      \"explorerUrl\": \"https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6\",\n+      \"verified\": false\n+    }\n+  }\n+}"
+    },
+    {
+      "path": "README.md",
+      "action": "edit",
+      "addedLines": 6,
+      "removedLines": 0,
+      "isFragment": true,
+      "truncated": false,
+      "hunk": "+## Deployed contracts\n+\n+| Network | Address | Explorer |\n+|---|---|---|\n+| Arc Testnet (5042002) | `0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6` | [View](https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6) |\n+\n ## Contract files"
+    }
+  ],
+  "contextFiles": [],
+  "workspaceFiles": [],
+  "deployments": [
+    {
+      "contract": "ShiftProof",
+      "address": "0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6",
+      "network": "Arc Testnet",
+      "explorerUrl": "https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6",
+      "txHash": "0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52",
+      "deployedAt": "2026-10-27T02:37:43.760Z"
+    }
+  ],
+  "artifacts": {
+    "contractSources": [
+      "contracts/ShiftProof.sol",
+      "contracts/script/Create2Factory.sol",
+      "contracts/script/Deploy.s.sol",
+      "contracts/script/DeployCreate2.s.sol",
+      "contracts/test/MockUSDC.sol",
+      "contracts/test/ShiftProof.t.sol"
+    ],
+    "abis": [
+      "contracts/out/Base.sol/CommonBase.json",
+      "contracts/out/Base.sol/ScriptBase.json",
+      "contracts/out/Base.sol/TestBase.json",
+      "contracts/out/Context.sol/Context.json",
+      "contracts/out/Create2.sol/Create2.json",
+      "contracts/out/Create2Factory.sol/Create2Factory.json",
+      "contracts/out/Deploy.s.sol/Deploy.json",
+      "contracts/out/DeployCreate2.s.sol/DeployCreate2.json",
+      "contracts/out/ERC20.sol/ERC20.json",
+      "contracts/out/Errors.sol/Errors.json",
+      "contracts/out/IERC1363.sol/IERC1363.json",
+      "contracts/out/IERC165.sol/IERC165.json",
+      "contracts/out/IERC20.sol/IERC20.json",
+      "contracts/out/IERC20Metadata.sol/IERC20Metadata.json",
+      "contracts/out/IMulticall3.sol/IMulticall3.json",
+      "contracts/out/LowLevelCall.sol/LowLevelCall.json",
+      "contracts/out/MockUSDC.sol/MockUSDC.json",
+      "contracts/out/MockUSDC.sol/ReentrantMockToken.json",
+      "contracts/out/ReentrancyGuard.sol/ReentrancyGuard.json",
+      "contracts/out/SafeERC20.sol/SafeERC20.json",
+      "contracts/out/Script.sol/Script.json",
+      "contracts/out/ShiftProof.sol/ShiftProof.json",
+      "contracts/out/ShiftProof.t.sol/AttestTest.json",
+      "contracts/out/ShiftProof.t.sol/CancelTest.json",
+      "contracts/out/ShiftProof.t.sol/ClaimTest.json",
+      "contracts/out/ShiftProof.t.sol/ClockInTest.json",
+      "contracts/out/ShiftProof.t.sol/ClockOutTest.json",
+      "contracts/out/ShiftProof.t.sol/ConstructorTest.json",
+      "contracts/out/ShiftProof.t.sol/CreateShiftTest.json",
+      "contracts/out/ShiftProof.t.sol/DonationTest.json",
+      "contracts/out/ShiftProof.t.sol/DoubleClaimTest.json",
+      "contracts/out/ShiftProof.t.sol/DoubleRefundTest.json",
+      "contracts/out/ShiftProof.t.sol/FuzzTest.json",
+      "contracts/out/ShiftProof.t.sol/InvariantTest.json",
+      "contracts/out/ShiftProof.t.sol/NoNativeValueTest.json",
+      "contracts/out/ShiftProof.t.sol/NoneStateTest.json",
+      "contracts/out/ShiftProof.t.sol/ReadTest.json",
+      "contracts/out/ShiftProof.t.sol/ReentrancyTest.json",
+      "contracts/out/ShiftProof.t.sol/RefundTest.json",
+      "contracts/out/ShiftProof.t.sol/ShiftProofHandler.json",
+      "contracts/out/ShiftProof.t.sol/ShiftProofTest.json",
+      "contracts/out/ShiftProof.t.sol/TerminalStateTest.json",
+      "contracts/out/ShiftProof.t.sol/ZeroAttestationTest.json",
+      "contracts/out/StdAssertions.sol/StdAssertions.json",
+      "contracts/out/StdChains.sol/StdChains.json",
+      "contracts/out/StdCheats.sol/StdCheats.json",
+      "contracts/out/StdCheats.sol/StdCheatsSafe.json",
+      "contracts/out/StdConstants.sol/StdConstants.json",
+      "contracts/out/StdError.sol/stdError.json",
+      "contracts/out/StdInvariant.sol/StdInvariant.json",
+      "contracts/out/StdJson.sol/stdJson.json",
+      "contracts/out/StdMath.sol/stdMath.json",
+      "contracts/out/StdStorage.sol/stdStorage.json",
+      "contracts/out/StdStorage.sol/stdStorageSafe.json",
+      "contracts/out/StdStyle.sol/StdStyle.json",
+      "contracts/out/StdToml.sol/stdToml.json",
+      "contracts/out/StdUtils.sol/StdUtils.json",
+      "contracts/out/StorageSlot.sol/StorageSlot.json",
+      "contracts/out/Test.sol/Test.json",
+      "contracts/out/Vm.sol/Vm.json",
+      "contracts/out/Vm.sol/VmSafe.json",
+      "contracts/out/console.sol/console.json",
+      "contracts/out/draft-IERC6093.sol/IERC1155Errors.json",
+      "contracts/out/draft-IERC6093.sol/IERC20Errors.json",
+      "contracts/out/draft-IERC6093.sol/IERC721Errors.json",
+      "contracts/out/safeconsole.sol/safeconsole.json"
+    ],
+    "metadata": [
+      "contracts/contract-metadata/ShiftProof.json"
+    ]
+  },
+  "webUrl": "https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39",
+  "questions": null,
+  "errorMessage": null,
+  "traceId": "01a17b35-54ba-762c-a485-8db7378daf08",
+  "budget": null
+}

@@ -1,0 +1,248 @@
++ AGENTS.md
+  +# ShiftProof
+  +
+  +> Built with Arc Studio - money-powered apps in minutes
+  +
+  +This is the **project memory** for ShiftProof V1.
+  +
+  +---
+  +
+  +## What This App Does
+  +
+  +ShiftProof is a per-shift USDC escrow and attestation protocol. An employer funds a shift with USDC; the worker optionally clocks in/out; the employer attests worked seconds; the worker claims their pay; anyone can trigger the residual refund to the employer. No admin, no upgrade, no fees.
+  +
+  +## Tech Stack
+  +
+  +- Contracts: Solidity 0.8.28 + Foundry (evm_version = cancun, optimizer 200 runs)
+  +- Token: USDC 6-decimal (Arc Testnet: 0x3600000000000000000000000000000000000000)
+  +- Chain: Arc Testnet (5042002) / Arc Mainnet (5042)
+  +- OZ: SafeERC20, ReentrancyGuard
+  +
+  +## Key Files
+  +
+  +- `contracts/ShiftProof.sol` — main contract (not yet deployed)
+  +- `contracts/test/ShiftProof.t.sol` — unit, fuzz, invariant tests (76 tests, all pass)
+  +- `contracts/test/MockUSDC.sol` — test-only 6-decimal ERC-20 + reentrant mock
+  +- `contracts/script/Deploy.s.sol` — deploy script (asserts chain 5042/5042002, USDC addr, decimals)
+  +
+  +## Contract State
+  +
+  +| Contract | Network | Address | Status |
+  +|---|---|---|---|
+  +| ShiftProof | Arc Testnet | - | Not yet deployed |
+  +
+  +## Decisions
+  +
+  +- `nextShiftId` starts at 1; 0 is "not found".
+  +- Floor division (hourlyRate * seconds / 3600) favours employer by at most 1 micro-USDC.
+  +- `createShift`: inbound `safeTransferFrom` happens BEFORE state write (one inbound transfer exception to CEI, per spec S5.4).
+  +- `claim`/`refundUnused`/`cancel`: state written BEFORE outbound transfer (strict CEI), all `nonReentrant`.
+  +- `ReentrantMockToken._doTransfer` bubbles up inner reverts so the outer guarded call also fails cleanly in tests.
+  +
+  +## To Build / Test
+  +
+  +```bash
+  +bun run contracts:build   # forge build
+  +bun run contracts:test    # forge test
+  +```
++ contracts/test/ShiftProof.t.sol
+  +// SPDX-License-Identifier: MIT
+  +pragma solidity 0.8.28;
+  +
+  +import {Test, console} from "forge-std/Test.sol";
+  +import {ShiftProof} from "../ShiftProof.sol";
+  +import {MockUSDC, ReentrantMockToken} from "./MockUSDC.sol";
+  +
+  +// =============================================================================
+  +// Helpers
+  +// =============================================================================
+  +
+  +contract ShiftProofTest is Test {
+  +    ShiftProof internal sp;
+  +    MockUSDC   internal usdc;
+  +
+  +    address internal employer = makeAddr("employer");
+  +    address internal worker   = makeAddr("worker");
+  +    address internal third    = makeAddr("third");
+  +
+  +    uint256 internal constant RATE     = 5_000_000;   // 5 USDC/h
+  +    uint32  internal constant DUR      = 3_600;        // 1 hour
+  +    uint256 internal constant ESCROW_1 = 5_000_000;   // 5 USDC
+  +
+  +    function setUp() public virtual {
+  +        usdc = new MockUSDC(6);
+  +        sp   = new ShiftProof(address(usdc));
+  +        // Fund employer with plenty of USDC
+  +        usdc.mint(employer, 1_000_000e6);
+  +        vm.prank(employer);
+  +        usdc.approve(address(sp), type(uint256).max);
+  +    }
+  +
+  +    // Helpers
+  +    function _createShift() internal returns (uint256 id) {
+  +        vm.prank(employer);
+  +        id = sp.createShift(worker, RATE, DUR);
+  +    }
+  +
+  +    function _createAndClockIn() internal returns (uint256 id) {
+  +        id = _createShift();
+  +        vm.prank(worker);
+  +        sp.clockIn(id);
+  +    }
+  +
+  +    function _createClockInOut() internal returns (uint256 id) {
+  +        id = _createAndClockIn();
+  +        vm.prank(worker);
+  +        sp.clockOut(id);
+  +    }
+  +
+  +    function _fullAttest(uint256 id, uint32 secs) internal {
+  +        vm.prank(employer);
+  +        sp.attest(id, secs);
+  +    }
+  +}
+  +
+  +// =============================================================================
+  +// Constructor
+  +// =============================================================================
+  +
+  +contract ConstructorTest is ShiftProofTest {
+  +    function test_constructor_sets_usdc() public view {
+  +        assertEq(sp.usdc(), address(usdc));
+  +    }
+  +
+  +    function test_constructor_nextShiftId_starts_at_1() public view {
+  +        assertEq(sp.nextShiftId(), 1);
+  +    }
+  +
+  +    function test_constructor_rejects_zero_address() public {
+  +        vm.expectRevert(ShiftProof.ZeroAddress.selector);
+  +        new ShiftProof(address(0));
+  +    }
+  +
+  +    function test_constructor_rejects_18_decimal_token() public {
+  +        MockUSDC mock18 = new MockUSDC(18);
+  +        vm.expectRevert(ShiftProof.InvalidDecimals.selector);
+  +        new ShiftProof(address(mock18));
+  +    }
+  +
+  +    function test_constructor_accepts_6_decimal_token() public {
+  +        ShiftProof sp2 = new ShiftProof(address(usdc));
+  +        assertEq(sp2.usdc(), address(usdc));
+  +    }
+  +}
+  +
+  +// =============================================================================
+  +// createShift — U01-U10
+  +// =============================================================================
+  +
+  +contract CreateShiftTest is ShiftProofTest {
+  +    // Override setUp to ensure employer has balance and approval for MAX_HOURLY_RATE tests
+  +    function setUp() public override {
+  +        super.setUp();
+  +        // Ensure employer has enough for MAX_HOURLY_RATE (1_000e6) x DUR (1h) = 1_000e6
+  +        usdc.mint(employer, 2_000e6);
+  +        vm.prank(employer);
+  +        usdc.approve(address(sp), type(uint256).max);
+  +    }
+  +
+  +    // U01 – happy path
+  +    function test_U01_createShift_valid() public {
+  +        vm.prank(employer);
+  +        vm.expectEmit(true, true, true, true);
+  +        emit ShiftProof.ShiftCreated(1, employer, worker, ESCROW_1, RATE, DUR);
+  +        uint256 id = sp.createShift(worker, RATE, DUR);
+  +
+  +        assertEq(id, 1);
+  +        assertEq(sp.nextShiftId(), 2);
+  +        assertEq(sp.totalEscrow(), ESCROW_1);
+  +        assertEq(usdc.balanceOf(address(sp)), ESCROW_1);
+  +
+  +        ShiftProof.Shift memory s = sp.getShift(id);
+  +        assertEq(s.employer, employer);
+  +        assertEq(s.worker, worker);
+  +        assertEq(s.escrow, ESCROW_1);
+  +        assertEq(uint8(s.status), uint8(ShiftProof.Status.Funded));
+  +    }
+  +
+  +    // U02 – zero worker
+  +    function test_U02_zero_worker_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.ZeroAddress.selector);
+  +        sp.createShift(address(0), RATE, DUR);
+  +    }
+  +
+  +    // U03 – worker == employer
+  +    function test_U03_worker_eq_employer_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.InvalidWorker.selector);
+  +        sp.createShift(employer, RATE, DUR);
+  +    }
+  +
+  +    // U04 – zero rate
+  +    function test_U04_zero_rate_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.InvalidAmount.selector);
+  +        sp.createShift(worker, 0, DUR);
+  +    }
+  +
+  +    // U05 – zero duration
+  +    function test_U05_zero_duration_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.InvalidDuration.selector);
+  +        sp.createShift(worker, RATE, 0);
+  +    }
+  +
+  +    // U06 – duration > 24h
+  +    function test_U06_duration_too_long_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.DurationTooLong.selector);
+  +        sp.createShift(worker, RATE, uint32(24 hours + 1));
+  +    }
+  +
+  +    // U07 – escrow > 10,000 USDC: rate 1000e6, maxSeconds 86400 => escrow = 24_000e6 > 10_000e6
+  +    function test_U07_escrow_too_large_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.EscrowTooLarge.selector);
+  +        sp.createShift(worker, 1_000e6, uint32(24 hours));
+  +    }
+  +
+  +    // U08 – insufficient allowance/balance: mint worker only 0 and approve 0
+  +    function test_U08_insufficient_allowance_reverts() public {
+  +        address employer2 = makeAddr("employer2");
+  +        // employer2 has no tokens and no approval
+  +        vm.prank(employer2);
+  +        vm.expectRevert();
+  +        sp.createShift(worker, RATE, DUR);
+  +    }
+  +
+  +    // U09 – 6-decimal mock works (constructor test + create)
+  +    function test_U09_6_decimal_works() public {
+  +        uint256 id = _createShift();
+  +        assertEq(sp.getShift(id).escrow, ESCROW_1);
+  +    }
+  +
+  +    // U10 – 18-decimal token rejected at construction (already tested in ConstructorTest)
+  +    function test_U10_18_decimal_rejected_on_deploy() public {
+  +        MockUSDC m18 = new MockUSDC(18);
+  +        vm.expectRevert(ShiftProof.InvalidDecimals.selector);
+  +        new ShiftProof(address(m18));
+  +    }
+  +
+  +    // Rate at exact MAX_HOURLY_RATE boundary (1000 USDC/h, 1h → escrow 1000 USDC <= 10000)
+  +    function test_create_max_rate_boundary() public {
+  +        // Read the constant BEFORE the prank so the external call does not consume it.
+  +        uint256 maxRate = sp.MAX_HOURLY_RATE();
+  +        vm.prank(employer);
+  +        uint256 id = sp.createShift(worker, maxRate, DUR);
+  +        assertEq(sp.getShift(id).escrow, 1_000e6);
+  +    }
+  +
+  +    // Rate above MAX_HOURLY_RATE reverts InvalidAmount regardless of duration
+  +    function test_create_rate_above_max_reverts() public {
+  +        // Read the constant and set up expectRevert BEFORE the prank so neither
+  +        // external call consumes the prank before createShift runs.
+  +        uint256 overRate = sp.MAX_HOURLY_RATE() + 1;
+  +        vm.expectRevert(ShiftProof.InvalidAmount.selector);
+  +        vm.prank(employer);
+  +        sp.createShift(worker, overRate, DUR);

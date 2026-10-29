@@ -1,0 +1,15 @@
+{
+  "ShiftProof": {
+    "arcTestnet": {
+      "chainId": 5042002,
+      "network": "ARC-TESTNET",
+      "address": "0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6",
+      "txHash": "0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52",
+      "deployedAt": "2026-10-27T02:37:43.604Z",
+      "usdc": "0x3600000000000000000000000000000000000000",
+      "explorerUrl": "https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6",
+      "verified": false,
+      "deploymentBlock": 69263663
+    }
+  }
+}

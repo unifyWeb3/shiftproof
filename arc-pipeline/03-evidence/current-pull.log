@@ -1,0 +1,6 @@
++ AGENTS.md
++ foundry.toml
++ contracts/ShiftProof.sol
++ contracts/script/Deploy.s.sol
++ contracts/test/MockUSDC.sol
++ contracts/test/ShiftProof.t.sol

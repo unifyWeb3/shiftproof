@@ -1,0 +1,4 @@
++ deployments.json
++ foundry.toml
++ contracts/contract-metadata/ShiftProof.json
++ contracts/out/ShiftProof.sol/ShiftProof.json

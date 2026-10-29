@@ -1,0 +1,90 @@
+{
+  "generatedAt": "2026-10-28T17:12:00Z",
+  "purpose": "Expected Arc mainnet bytecode for ShiftProof V1, derived from the frozen Foundry artifact without deploying.",
+  "networkTarget": {
+    "name": "Arc Mainnet",
+    "chainId": 5042,
+    "rpc": "https://rpc.mainnet.arc.io",
+    "explorer": "https://explorer.arc.io"
+  },
+  "artifact": {
+    "path": "app/contracts/out/ShiftProof.sol/ShiftProof.json",
+    "contract": "contracts/ShiftProof.sol:ShiftProof",
+    "sourceBytes": 13039,
+    "sourceKeccak256": "0x5d5e2edb0e2cea4601933f12b2a59bd4e0424d07375323404e0df5c2813ae3ca"
+  },
+  "compiler": {
+    "version": "0.8.28+commit.7893614a",
+    "evmVersion": "cancun",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "viaIR": false,
+    "metadataBytecodeHash": "ipfs",
+    "libraries": {},
+    "remappings": [
+      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+      "forge-std/=lib/forge-std/src/"
+    ]
+  },
+  "constructor": {
+    "signature": "constructor(address)",
+    "argumentName": "usdc_",
+    "argumentAddress": "0x3600000000000000000000000000000000000000",
+    "argumentAbi": "0x0000000000000000000000003600000000000000000000000000000000000000"
+  },
+  "creationCode": {
+    "bytes": 6392,
+    "keccak256": "0x379b47bd04762da80e35d34025fb9656e9b16f9243bad00851421fd433cbb5ad",
+    "note": "Artifact bytecode.object, without constructor arguments."
+  },
+  "initCode": {
+    "bytes": 6424,
+    "keccak256": "0xff7d1c3059cc1d5af02576e3659c2f300f4ce33f29bcb263ede4235d869b7a37",
+    "note": "Creation code plus the 32-byte ABI-encoded USDC constructor argument."
+  },
+  "runtimeCode": {
+    "artifactBytes": 5990,
+    "artifactKeccak256": "0xd76ac4fd9070d98a1faa08865da36eb2111f634762945c1234e8391e4cdbdca1",
+    "expectedMainnetBytes": 5990,
+    "expectedMainnetKeccak256": "0x843ef44664f6eb7bbbe95c213d6fd60b88d912b3810d087981ab69a94b90b1e5",
+    "observedMainnetKeccak256": null,
+    "note": "The artifact has zero bytes in the five 20-byte immutable slots. The expected mainnet runtime patches the USDC address into those slots. The testnet deployment already produces this exact expected hash because the USDC address is identical on Arc testnet and mainnet."
+  },
+  "immutableUsdc": {
+    "regionBytes": 20,
+    "offsets": [395, 1474, 1932, 2394, 4141],
+    "artifactBytesAtEachOffset": "0x0000000000000000000000000000000000000000",
+    "expectedMainnetBytesAtEachOffset": "0x3600000000000000000000000000000000000000",
+    "differingByteOffsets": [395, 1474, 1932, 2394, 4141],
+    "differingByteValues": {
+      "artifact": "0x00",
+      "expectedMainnet": "0x36"
+    },
+    "note": "Only five bytes differ across the whole 5,990-byte runtime. The remaining 19 bytes of each 20-byte region are zero because the USDC address ends in 19 zero bytes."
+  },
+  "testnetComparison": {
+    "chainId": 5042002,
+    "contract": "0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6",
+    "txHash": "0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52",
+    "block": 69263663,
+    "runtimeBytes": 5990,
+    "runtimeKeccak256": "0x843ef44664f6eb7bbbe95c213d6fd60b88d912b3810d087981ab69a94b90b1e5",
+    "matchesExpectedMainnetRuntime": true,
+    "artifactVsTestnetDifferingByteOffsets": [395, 1474, 1932, 2394, 4141],
+    "evidence": "arc-pipeline/03-evidence/s3-onchain-verification.json"
+  },
+  "status": {
+    "mainnetDeployed": false,
+    "mainnetObserved": false,
+    "label": "UNVERIFIED on mainnet; expected hash reconstructed from the frozen artifact and verified against testnet bytecode."
+  },
+  "method": {
+    "sourceHash": "Read metadata.sources['contracts/ShiftProof.sol'].keccak256 and independently hashed the source bytes.",
+    "artifactHashes": "Keccak-256 over bytecode.object / deployedBytecode.object.",
+    "immutablePatch": "Replaced the five 20-byte zero regions in deployedBytecode with 0x3600000000000000000000000000000000000000.",
+    "testnetCheck": "Fetched eth_getCode for the testnet address, compared byte-for-byte with the patched artifact, and hashed both.",
+    "hashFunction": "Keccak-256, not NIST SHA3-256."
+  }
+}

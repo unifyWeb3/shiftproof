@@ -1,0 +1,9 @@
+Local commits (no remote, no push)
+
+9aa2c5e82b6403a40a8dea7797e32d2e87b513ef
+Phase 1: ShiftProof Arc Testnet app source and deployment
+
+246a11038f9ac28f97e5677f74b17d98cb6d68af
+Phase 1: report, testnet evidence, and verification notes
+
+This record commit is the next commit after the two above.

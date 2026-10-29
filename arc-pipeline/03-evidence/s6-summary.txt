@@ -1,0 +1,40 @@
+Reading the spec and current ABI first: Now reading the full tuple shape and all current source files: Good. Now I have a complete picture. This is a substantial correction with 12 numbered fixes. Let me plan the work: No `vite.svg` exists. Fix `index.html` and `index.css` now: Now rewrite the lib files: Now update `lib/contract.ts` with the correct `ShiftTuple` type: Now update the Layout nav to keep all routes including Proof, and the footer: Now run `bun run check`: Three TS errors + 3 warnings (warnings-only is fine). Fix each: Also remove the stale re-export from TxButton: Now fix Employer.tsx TS errors:
+
+**Error 1**: `parseUnits` unused and `ShiftWithId` unused: **Error 2**: line 154 — `decoded.args` typed as `readonly unknown[]`. Fix the `decodeEventLog` result access: **Error 3**: line 326 — rendering a mixed array. Let me find that: Rewrite that block without the mixed-type array pattern to avoid the TS error: Now fix the ShiftReceipt warning (unused navigate) and Employer warning (navigate used correctly): Now run check again: Clean. Now run the production build: Build succeeds. Chunk-size warnings are informational (wagmi/viem/connectkit). Now update README, confirm dev server still running: Now add a note in README about Phase 1 testnet and live-USDC E2E status: All 12 fixes are in. Here is a precise account of what changed and what the checks produced.
+
+**`bun run check` output:** `Found 0 warnings and 0 errors` (lint, two passes) + `tsc --noEmit` exited 0.
+
+**`bunx vite build` output:** `✓ built in 18.77s` — zero errors; the large-chunk notices are informational (wagmi/viem/connectkit vendors).
+
+---
+
+**What was fixed, fix-by-fix:**
+
+1. **Remote fonts removed.** `index.html` has no Google Fonts preconnect/stylesheet. `index.css` uses a system font stack (`-apple-system, BlinkMacSystemFont, Segoe UI, system-ui`). The `vite.svg` reference was also removed (the file does not exist locally).
+
+2. **All shift fields corrected.** `ShiftTuple` type now exactly mirrors the ABI tuple: `employer, worker, createdAt, startedAt, endedAt, maxSeconds, attestedSeconds, hourlyRate, escrow, owed, status`. Every reference to `escrowed`, `clockedInAt`, `clockedOutAt`, `attestedAt`, `settledAt` has been replaced. `id` is passed as a separate prop.
+
+3. **`/proof` is now the submission/judge page.** It shows deployment facts, verification status (PASS/UNVERIFIED), caveats, and honest placeholders for repo/video/live host. No shift lookup. The shift lookup moved to the Home page as a shift-ID input that navigates to `/shift/:id`.
+
+4. **`/shift/:id` is read-only.** All write buttons removed. It shows the full tuple, UTC + local timestamps, locally known tx hashes per action, and explorer links for contract and USDC.
+
+5. **Write actions corrected:**
+   - Employer: attest allowed in Funded/Active/AwaitingAttestation (status 1/2/3), allows 0 seconds, enforces `<= maxSeconds`; cancel only in Funded (status 1); `refundUnused` shown when status 4 and `escrow > owed`, or status 5 and `escrow > 0`.
+   - Worker: clockIn only in Funded, clockOut only in Active, claim only in Attested; `owed` is taken directly from the contract tuple, not recomputed; role check gates all actions.
+   - `ShiftCreated` event decoded from the receipt to get the new shift ID automatically — no manual add required.
+
+6. **NetworkGuard never hides content.** Shows a yellow banner + user-clicked "Switch to Arc Testnet" button using `useSwitchChain`; falls back to `wallet_addEthereumChain` if the chain is unknown to the wallet. Never auto-switches.
+
+7. **TxButton has a confirmation card.** After clicking, a readable card shows action label, network, contract, shift ID, amount, and expected effect. "Confirm and sign" runs simulate then sign. "Cancel" dismisses without touching the wallet.
+
+8. **Error decoding uses viem `BaseError`/`ContractFunctionRevertedError`.** Reads `data.errorName` and maps all named custom errors to plain-language messages per the spec table.
+
+9. **Amount formatting fixed.** Uses `parseUnits(value, 6)` (via `parseUsdcInput`) and `formatUnits(raw, 6)` from viem throughout. No `parseFloat` on USDC amounts used for calculations. `owed` shown from the contract field, not recomputed.
+
+10. **localStorage uses spec keys.** Keys are `shiftproof:<chainId>:<contract>:created`, `...:assigned`, `...:lastRead`, plus `...:tx:<id>` for per-shift tx hashes. Legacy shims keep existing data accessible. No PII.
+
+11. **Help updated.** Cancel is correctly documented as Funded-only. RefundUnused is documented as permissionless and always to the employer. Added: no fees, no admin/pause/upgrade, no dispute mechanism, attestation is employer trust, no PII. The status flow table is corrected.
+
+12. **`/proof` and `/help` remain in nav.** Studio watermark and footer (full contract address, chain ID, explorer link) are present. README updated to describe Phase 1 as Arc Testnet only and to record that live-USDC E2E is unverified.
+
+Want to share this app? You can deploy it for free to **Netlify** or **Hugging Face** or **Vercel**. To get started, open the **Integrations** menu in the workbench header (or the **+** menu in the chat toolbar) and choose **Connect Netlify** or **Connect Hugging Face** or **Connect Vercel** to connect your account. Once connected, just say "deploy this" and I'll handle the rest.

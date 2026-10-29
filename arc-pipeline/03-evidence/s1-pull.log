@@ -1,0 +1,524 @@
++ contracts/ShiftProof.sol
+  +// SPDX-License-Identifier: MIT
+  +pragma solidity 0.8.28;
+  +
+  +import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+  +import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+  +import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+  +import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+  +
+  +/// @title ShiftProof V1
+  +/// @notice Per-shift USDC escrow with optional clock-in/out and employer attestation.
+  +/// @dev    No admin, owner, pause, upgrade, fee, sweep, or native-value path.
+  +///         Amounts use 6-decimal USDC units only.
+  +///         Floor division (truncation) favours the employer by at most 1 micro-USDC per calculation.
+  +contract ShiftProof is ReentrancyGuard {
+  +    using SafeERC20 for IERC20;
+  +
+  +    // -------------------------------------------------------------------------
+  +    // Constants
+  +    // -------------------------------------------------------------------------
+  +
+  +    /// @notice Maximum USDC hourly rate (1,000 USDC, 6-decimal units).
+  +    uint256 public constant MAX_HOURLY_RATE = 1_000e6;
+  +
+  +    /// @notice Maximum shift duration in seconds (24 hours).
+  +    uint32 public constant MAX_SHIFT_SECONDS = 24 hours;
+  +
+  +    /// @notice Maximum escrow per shift (10,000 USDC, 6-decimal units).
+  +    uint256 public constant MAX_ESCROW = 10_000e6;
+  +
+  +    // -------------------------------------------------------------------------
+  +    // Types
+  +    // -------------------------------------------------------------------------
+  +
+  +    enum Status {
+  +        None,                // 0: nonexistent
+  +        Funded,              // 1: escrow funded, worker not clocked in
+  +        Active,              // 2: worker clocked in
+  +        AwaitingAttestation, // 3: worker clocked out
+  +        Attested,            // 4: employer set payable seconds/amount
+  +        Claimed,             // 5: worker paid; residual may remain
+  +        Settled,             // 6: worker paid and escrow fully returned
+  +        Cancelled            // 7: employer cancelled before clock-in
+  +    }
+  +
+  +    struct Shift {
+  +        address employer;
+  +        address worker;
+  +        uint64  createdAt;
+  +        uint64  startedAt;
+  +        uint64  endedAt;
+  +        uint32  maxSeconds;
+  +        uint32  attestedSeconds;
+  +        uint256 hourlyRate;   // USDC 6-decimal units per hour
+  +        uint256 escrow;       // remaining USDC 6-decimal units in this shift
+  +        uint256 owed;         // USDC 6-decimal units owed to the worker
+  +        Status  status;
+  +    }
+  +
+  +    // -------------------------------------------------------------------------
+  +    // Events
+  +    // -------------------------------------------------------------------------
+  +
+  +    event ShiftCreated(
+  +        uint256 indexed shiftId,
+  +        address indexed employer,
+  +        address indexed worker,
+  +        uint256 escrow,
+  +        uint256 hourlyRate,
+  +        uint32  maxSeconds
+  +    );
+  +    event ClockedIn(uint256 indexed shiftId, address indexed worker, uint64 at);
+  +    event ClockedOut(uint256 indexed shiftId, address indexed worker, uint64 at);
+  +    event Attested(
+  +        uint256 indexed shiftId,
+  +        address indexed employer,
+  +        uint32  attestedSeconds,
+  +        uint256 owed
+  +    );
+  +    event Claimed(uint256 indexed shiftId, address indexed worker, uint256 amount);
+  +    event UnusedRefunded(uint256 indexed shiftId, address indexed employer, uint256 amount);
+  +    event Cancelled(uint256 indexed shiftId, address indexed employer, uint256 amount);
+  +    event Settled(uint256 indexed shiftId);
+  +
+  +    // -------------------------------------------------------------------------
+  +    // Errors
+  +    // -------------------------------------------------------------------------
+  +
+  +    error ZeroAddress();
+  +    error InvalidWorker();
+  +    error InvalidAmount();
+  +    error InvalidDuration();
+  +    error DurationTooLong();
+  +    error EscrowTooLarge();
+  +    error InvalidDecimals();
+  +    error InvalidStatus();
+  +    error NotEmployer();
+  +    error NotWorker();
+  +    error AttestedTooLong();
+  +    error NothingToClaim();
+  +    error NothingToRefund();
+  +    error TooManyIds();
+  +
+  +    // -------------------------------------------------------------------------
+  +    // State
+  +    // -------------------------------------------------------------------------
+  +
+  +    /// @notice The USDC ERC-20 token used for all escrow.
+  +    address public immutable usdc;
+  +
+  +    /// @notice Next shift ID to be assigned; starts at 1 (0 is invalid).
+  +    uint256 public nextShiftId;
+  +
+  +    /// @notice Sum of escrow across all open (non-terminal) shifts.
+  +    uint256 public totalEscrow;
+  +
+  +    /// @dev shiftId => Shift
+  +    mapping(uint256 => Shift) private _shifts;
+  +
+  +    // -------------------------------------------------------------------------
+  +    // Constructor
+  +    // -------------------------------------------------------------------------
+  +
+  +    /// @param usdc_ ERC-20 token address; must be non-zero and have 6 decimals.
+  +    constructor(address usdc_) {
+  +        if (usdc_ == address(0)) revert ZeroAddress();
+  +        if (IERC20Metadata(usdc_).decimals() != 6) revert InvalidDecimals();
+  +        usdc = usdc_;
+  +        nextShiftId = 1;
+  +    }
+  +
+  +    // -------------------------------------------------------------------------
+  +    // External state-changing functions
+  +    // -------------------------------------------------------------------------
+  +
+  +    /// @notice Create a new shift and pull escrow from the caller.
+  +    /// @param  worker     Address of the worker; must be non-zero and != msg.sender.
+  +    /// @param  hourlyRate USDC 6-decimal units per hour; must be in (0, MAX_HOURLY_RATE].
+  +    /// @param  maxSeconds Maximum shift duration in seconds; must be in (0, MAX_SHIFT_SECONDS].
+  +    /// @return shiftId    The newly assigned shift ID.
+  +    function createShift(
+  +        address worker,
+  +        uint256 hourlyRate,
+  +        uint32  maxSeconds
+  +    ) external nonReentrant returns (uint256 shiftId) {
+  +        // --- Checks ---
+  +        if (worker == address(0)) revert ZeroAddress();
+  +        if (worker == msg.sender) revert InvalidWorker();
+  +        if (hourlyRate == 0 || hourlyRate > MAX_HOURLY_RATE) revert InvalidAmount();
+  +        if (maxSeconds == 0) revert InvalidDuration();
+  +        if (maxSeconds > MAX_SHIFT_SECONDS) revert DurationTooLong();
+  +
+  +        uint256 escrow = hourlyRate * uint256(maxSeconds) / 3600;
+  +        if (escrow == 0) revert InvalidAmount();
+  +        if (escrow > MAX_ESCROW) revert EscrowTooLarge();
+  +
+  +        // --- Interactions (inbound transfer before state write, per CEI note in spec) ---
+  +        IERC20(usdc).safeTransferFrom(msg.sender, address(this), escrow);
+  +
+  +        // --- Effects ---
+  +        shiftId = nextShiftId++;
+  +        totalEscrow += escrow;
+  +
+  +        Shift storage s = _shifts[shiftId];
+  +        s.employer      = msg.sender;
+  +        s.worker        = worker;
+  +        s.createdAt     = uint64(block.timestamp);
+  +        s.maxSeconds    = maxSeconds;
+  +        s.hourlyRate    = hourlyRate;
+  +        s.escrow        = escrow;
+  +        s.status        = Status.Funded;
+  +
+  +        emit ShiftCreated(shiftId, msg.sender, worker, escrow, hourlyRate, maxSeconds);
+  +    }
+  +
+  +    /// @notice Worker clocks in; moves shift from Funded to Active.
+  +    function clockIn(uint256 shiftId) external {
+  +        Shift storage s = _shifts[shiftId];
+  +        if (s.status == Status.None) revert InvalidStatus();
+  +        if (msg.sender != s.worker) revert NotWorker();
+  +        if (s.status != Status.Funded) revert InvalidStatus();
+  +
+  +        s.startedAt = uint64(block.timestamp);
+  +        s.status    = Status.Active;
+  +
+  +        emit ClockedIn(shiftId, msg.sender, s.startedAt);
+  +    }
+  +
+  +    /// @notice Worker clocks out; moves shift from Active to AwaitingAttestation.
+  +    function clockOut(uint256 shiftId) external {
+  +        Shift storage s = _shifts[shiftId];
+  +        if (s.status == Status.None) revert InvalidStatus();
+  +        if (msg.sender != s.worker) revert NotWorker();
+  +        if (s.status != Status.Active) revert InvalidStatus();
+  +
+  +        s.endedAt = uint64(block.timestamp);
+  +        s.status  = Status.AwaitingAttestation;
+  +
+  +        emit ClockedOut(shiftId, msg.sender, s.endedAt);
+  +    }
+  +
++ contracts/script/Deploy.s.sol
+  +// SPDX-License-Identifier: MIT
+  +pragma solidity 0.8.28;
+  +
+  +import {Script, console} from "forge-std/Script.sol";
+  +import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+  +import {ShiftProof} from "../ShiftProof.sol";
+  +
+  +/// @title ShiftProof V1 deploy script
+  +/// @notice Must be run on Arc Testnet (5042002) or Arc Mainnet (5042).
+  +///         Asserts chain ID and USDC address before deploying.
+  +///         This script compiles but does NOT broadcast; add `--broadcast` to deploy.
+  +contract Deploy is Script {
+  +    /// @dev Arc USDC address (same on testnet and mainnet).
+  +    address internal constant USDC_ARC = 0x3600000000000000000000000000000000000000;
+  +
+  +    function run() external {
+  +        // --- Pre-flight assertions ---
+  +        uint256 cid = block.chainid;
+  +        require(
+  +            cid == 5042 || cid == 5042002,
+  +            "Deploy: wrong chain - must be Arc Mainnet (5042) or Arc Testnet (5042002)"
+  +        );
+  +        require(
+  +            USDC_ARC != address(0),
+  +            "Deploy: USDC address is zero"
+  +        );
+  +        require(
+  +            IERC20Metadata(USDC_ARC).decimals() == 6,
+  +            "Deploy: USDC decimals must be 6"
+  +        );
+  +
+  +        // --- Deploy ---
+  +        vm.startBroadcast();
+  +        ShiftProof sp = new ShiftProof(USDC_ARC);
+  +        vm.stopBroadcast();
+  +
+  +        console.log("ShiftProof deployed at:", address(sp));
+  +        console.log("  usdc        :", sp.usdc());
+  +        console.log("  nextShiftId :", sp.nextShiftId());
+  +        console.log("  chain       :", cid);
+  +    }
+  +}
++ contracts/test/MockUSDC.sol
+  +// SPDX-License-Identifier: MIT
+  +pragma solidity 0.8.28;
+  +
+  +import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+  +
+  +/// @notice Test-only 6-decimal ERC-20 mock used by ShiftProof unit tests.
+  +///         Never deployed to mainnet or testnet.
+  +contract MockUSDC is ERC20 {
+  +    uint8 private _dec;
+  +
+  +    constructor(uint8 decimals_) ERC20("Mock USDC", "mUSDC") {
+  +        _dec = decimals_;
+  +    }
+  +
+  +    function decimals() public view override returns (uint8) {
+  +        return _dec;
+  +    }
+  +
+  +    /// @notice Mint tokens to any address (test helper only).
+  +    function mint(address to, uint256 amount) external {
+  +        _mint(to, amount);
+  +    }
+  +}
+  +
+  +/// @notice Reentrant mock that attempts to call back into ShiftProof during a transfer.
+  +///         Used to verify nonReentrant guards.
+  +contract ReentrantMockToken {
+  +    uint8 private constant DEC = 6;
+  +    mapping(address => uint256) public balanceOf;
+  +    mapping(address => mapping(address => uint256)) public allowance;
+  +
+  +    address public target;      // ShiftProof contract
+  +    bytes   public reentrantCall; // encoded calldata to replay
+  +
+  +    string  public constant name     = "Reentrant Token";
+  +    string  public constant symbol   = "REENT";
+  +    uint256 public constant totalSupply = type(uint256).max;
+  +
+  +    constructor() {
+  +        balanceOf[msg.sender] = type(uint256).max;
+  +    }
+  +
+  +    function decimals() external pure returns (uint8) { return DEC; }
+  +
+  +    function setReentrantCall(address target_, bytes calldata data) external {
+  +        target = target_;
+  +        reentrantCall = data;
+  +    }
+  +
+  +    function approve(address spender, uint256 amount) external returns (bool) {
+  +        allowance[msg.sender][spender] = amount;
+  +        return true;
+  +    }
+  +
+  +    function transfer(address to, uint256 amount) external returns (bool) {
+  +        _doTransfer(msg.sender, to, amount);
+  +        return true;
+  +    }
+  +
+  +    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+  +        if (allowance[from][msg.sender] != type(uint256).max) {
+  +            allowance[from][msg.sender] -= amount;
+  +        }
+  +        _doTransfer(from, to, amount);
+  +        return true;
+  +    }
+  +
+  +    function _doTransfer(address from, address to, uint256 amount) internal {
+  +        balanceOf[from] -= amount;
+  +        balanceOf[to]   += amount;
+  +        // Attempt the reentrant call if configured.
+  +        if (target != address(0) && reentrantCall.length > 0) {
+  +            (bool ok,) = target.call(reentrantCall);
+  +            // We do not care about the inner result; the guard should revert it.
+  +            ok; // silence unused warning
+  +        }
+  +    }
+  +}
++ contracts/test/ShiftProof.t.sol
+  +// SPDX-License-Identifier: MIT
+  +pragma solidity 0.8.28;
+  +
+  +import {Test, console} from "forge-std/Test.sol";
+  +import {ShiftProof} from "../ShiftProof.sol";
+  +import {MockUSDC, ReentrantMockToken} from "./MockUSDC.sol";
+  +
+  +// =============================================================================
+  +// Helpers
+  +// =============================================================================
+  +
+  +contract ShiftProofTest is Test {
+  +    ShiftProof internal sp;
+  +    MockUSDC   internal usdc;
+  +
+  +    address internal employer = makeAddr("employer");
+  +    address internal worker   = makeAddr("worker");
+  +    address internal third    = makeAddr("third");
+  +
+  +    uint256 internal constant RATE     = 5_000_000;   // 5 USDC/h
+  +    uint32  internal constant DUR      = 3_600;        // 1 hour
+  +    uint256 internal constant ESCROW_1 = 5_000_000;   // 5 USDC
+  +
+  +    function setUp() public {
+  +        usdc = new MockUSDC(6);
+  +        sp   = new ShiftProof(address(usdc));
+  +        // Fund employer with plenty of USDC
+  +        usdc.mint(employer, 1_000_000e6);
+  +        vm.prank(employer);
+  +        usdc.approve(address(sp), type(uint256).max);
+  +    }
+  +
+  +    // Helpers
+  +    function _createShift() internal returns (uint256 id) {
+  +        vm.prank(employer);
+  +        id = sp.createShift(worker, RATE, DUR);
+  +    }
+  +
+  +    function _createAndClockIn() internal returns (uint256 id) {
+  +        id = _createShift();
+  +        vm.prank(worker);
+  +        sp.clockIn(id);
+  +    }
+  +
+  +    function _createClockInOut() internal returns (uint256 id) {
+  +        id = _createAndClockIn();
+  +        vm.prank(worker);
+  +        sp.clockOut(id);
+  +    }
+  +
+  +    function _fullAttest(uint256 id, uint32 secs) internal {
+  +        vm.prank(employer);
+  +        sp.attest(id, secs);
+  +    }
+  +}
+  +
+  +// =============================================================================
+  +// Constructor
+  +// =============================================================================
+  +
+  +contract ConstructorTest is ShiftProofTest {
+  +    function test_constructor_sets_usdc() public view {
+  +        assertEq(sp.usdc(), address(usdc));
+  +    }
+  +
+  +    function test_constructor_nextShiftId_starts_at_1() public view {
+  +        assertEq(sp.nextShiftId(), 1);
+  +    }
+  +
+  +    function test_constructor_rejects_zero_address() public {
+  +        vm.expectRevert(ShiftProof.ZeroAddress.selector);
+  +        new ShiftProof(address(0));
+  +    }
+  +
+  +    function test_constructor_rejects_18_decimal_token() public {
+  +        MockUSDC mock18 = new MockUSDC(18);
+  +        vm.expectRevert(ShiftProof.InvalidDecimals.selector);
+  +        new ShiftProof(address(mock18));
+  +    }
+  +
+  +    function test_constructor_accepts_6_decimal_token() public {
+  +        ShiftProof sp2 = new ShiftProof(address(usdc));
+  +        assertEq(sp2.usdc(), address(usdc));
+  +    }
+  +}
+  +
+  +// =============================================================================
+  +// createShift — U01-U10
+  +// =============================================================================
+  +
+  +contract CreateShiftTest is ShiftProofTest {
+  +    // U01 – happy path
+  +    function test_U01_createShift_valid() public {
+  +        vm.prank(employer);
+  +        vm.expectEmit(true, true, true, true);
+  +        emit ShiftProof.ShiftCreated(1, employer, worker, ESCROW_1, RATE, DUR);
+  +        uint256 id = sp.createShift(worker, RATE, DUR);
+  +
+  +        assertEq(id, 1);
+  +        assertEq(sp.nextShiftId(), 2);
+  +        assertEq(sp.totalEscrow(), ESCROW_1);
+  +        assertEq(usdc.balanceOf(address(sp)), ESCROW_1);
+  +
+  +        ShiftProof.Shift memory s = sp.getShift(id);
+  +        assertEq(s.employer, employer);
+  +        assertEq(s.worker, worker);
+  +        assertEq(s.escrow, ESCROW_1);
+  +        assertEq(uint8(s.status), uint8(ShiftProof.Status.Funded));
+  +    }
+  +
+  +    // U02 – zero worker
+  +    function test_U02_zero_worker_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.ZeroAddress.selector);
+  +        sp.createShift(address(0), RATE, DUR);
+  +    }
+  +
+  +    // U03 – worker == employer
+  +    function test_U03_worker_eq_employer_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.InvalidWorker.selector);
+  +        sp.createShift(employer, RATE, DUR);
+  +    }
+  +
+  +    // U04 – zero rate
+  +    function test_U04_zero_rate_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.InvalidAmount.selector);
+  +        sp.createShift(worker, 0, DUR);
+  +    }
+  +
+  +    // U05 – zero duration
+  +    function test_U05_zero_duration_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.InvalidDuration.selector);
+  +        sp.createShift(worker, RATE, 0);
+  +    }
+  +
+  +    // U06 – duration > 24h
+  +    function test_U06_duration_too_long_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.DurationTooLong.selector);
+  +        sp.createShift(worker, RATE, uint32(24 hours + 1));
+  +    }
+  +
+  +    // U07 – escrow > 10,000 USDC: rate 1000e6, maxSeconds 86400 => escrow = 24_000e6 > 10_000e6
+  +    function test_U07_escrow_too_large_reverts() public {
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.EscrowTooLarge.selector);
+  +        sp.createShift(worker, 1_000e6, uint32(24 hours));
+  +    }
+  +
+  +    // U08 – insufficient allowance/balance: mint worker only 0 and approve 0
+  +    function test_U08_insufficient_allowance_reverts() public {
+  +        address employer2 = makeAddr("employer2");
+  +        // employer2 has no tokens and no approval
+  +        vm.prank(employer2);
+  +        vm.expectRevert();
+  +        sp.createShift(worker, RATE, DUR);
+  +    }
+  +
+  +    // U09 – 6-decimal mock works (constructor test + create)
+  +    function test_U09_6_decimal_works() public {
+  +        uint256 id = _createShift();
+  +        assertEq(sp.getShift(id).escrow, ESCROW_1);
+  +    }
+  +
+  +    // U10 – 18-decimal token rejected at construction (already tested in ConstructorTest)
+  +    function test_U10_18_decimal_rejected_on_deploy() public {
+  +        MockUSDC m18 = new MockUSDC(18);
+  +        vm.expectRevert(ShiftProof.InvalidDecimals.selector);
+  +        new ShiftProof(address(m18));
+  +    }
+  +
+  +    // Rate at exact MAX_HOURLY_RATE boundary (1000 USDC/h, 1h → escrow 1000 USDC <= 10000)
+  +    function test_create_max_rate_boundary() public {
+  +        // Explicitly mint and approve in this test to be safe
+  +        usdc.mint(employer, 2_000e6);
+  +        vm.prank(employer);
+  +        usdc.approve(address(sp), type(uint256).max);
+  +        vm.prank(employer);
+  +        uint256 id = sp.createShift(worker, sp.MAX_HOURLY_RATE(), DUR);
+  +        assertEq(sp.getShift(id).escrow, 1_000e6);
+  +    }
+  +
+  +    // Rate above MAX_HOURLY_RATE reverts InvalidAmount regardless of duration
+  +    function test_create_rate_above_max_reverts() public {
+  +        uint256 overRate = sp.MAX_HOURLY_RATE() + 1;
+  +        // The rate guard fires before any token movement, so no balance needed
+  +        vm.prank(employer);
+  +        vm.expectRevert(ShiftProof.InvalidAmount.selector);
+  +        sp.createShift(worker, overRate, DUR);
+  +    }
+  +}
+  +
+  +// =============================================================================
+  +// clockIn — U11-U13
+  +// =============================================================================
+  +
+  +contract ClockInTest is ShiftProofTest {
