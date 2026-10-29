@@ -202,7 +202,7 @@ Gross escrow 35 USDC; gas cap 0.25 USDC; total committed 35.25 USDC, under the 4
 - No live-USDC testnet E2E with two real wallets. `UNVERIFIED`.
 - No explorer source verification. `UNRESOLVED`.
 - No mainnet deployment. `VERIFIED`.
-- Public repo and Vercel preview authorized; video is still a placeholder. `UNRESOLVED`.
+- Public repo and Vercel preview are live; video is still a placeholder. `VERIFIED` repo/preview; `UNRESOLVED` video.
 - The app's runtime/UI is testnet-only until `deployments.json`, `contract.ts`, `config.ts`, `Proof.tsx`, `Help.tsx`, `Layout.tsx`, `Home.tsx`, `ShiftCard.tsx`, and `ShiftReceipt.tsx` are updated. `VERIFIED` current state; `UNVERIFIED` mainnet config.
 - No `bun.lock`; forge-std commit not pinned; Arc Foundry version not recorded in the artifact. `UNRESOLVED` reproducibility gaps.
 - No audit. Do not imply one. `VERIFIED`.
