@@ -54,7 +54,7 @@ bun run contracts:test
 
 Runs 76 tests: unit matrix (U01-U40), transition matrix (T01-T16), fuzz (rate / duration / attested seconds / random actors), and six Foundry invariants: solvency, `totalEscrow` sum, `owed <= escrow`, claimed implies `owed == 0`, settled implies zero escrow/owed, and cancelled implies zero escrow/owed.
 
-**E2E status (Phase 1):** Fork-based E2E with 3 flows passed using MockUSDC (Arc Testnet USDC calls a precompile absent in vanilla anvil — see `TESTNET-E2E.md`). Live USDC E2E with two real Rabby wallets on Arc Testnet has **not** been verified. Phase 1 target is Arc Testnet only; no mainnet deployment.
+**E2E status (Phase 1):** Fork-based E2E with 3 flows passed using MockUSDC (Arc Testnet USDC calls a precompile absent in vanilla anvil — see `TESTNET-E2E.md`). Live USDC E2E with two real Rabby wallets on Arc Testnet has **not** been verified; the acceptance checklist is `TESTNET-E2E-LIVE.md`. Phase 1 target is Arc Testnet only; no mainnet deployment.
 
 ### Run frontend dev server
 

@@ -5,7 +5,7 @@
 **Status:** **Build and testnet deployment complete. Live-USDC end-to-end and explorer source verification remain UNVERIFIED.** This is not a mainnet acceptance and not a claim that a real worker pilot ran.  
 **Studio usage at stop:** `64%` (`03-evidence/usage-final.json`); no Studio turn was run at or after 70%.  
 **Mainnet:** no deployment, no transaction, no key access, no spend.  
-**GitHub:** nothing pushed. Local commits are described in §7.
+**GitHub:** Phase 1 pushed nothing. Phase 2b published a curated public snapshot at [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) (single commit `3a82e89`); internal `00`–`02` documents are excluded.
 
 ---
 
@@ -203,7 +203,10 @@ The unresolved items are live-runtime, source-verification, and submission-asset
 - Report/evidence commit: `246a11038f9ac28f97e5677f74b17d98cb6d68af`
   (`Phase 1: report, testnet evidence, and verification notes`).
 - Exact hashes are also recorded in `arc-pipeline/03-evidence/commits.txt`.
-- No remote was added and **nothing was pushed**.
+- Phase 1 added no remote and pushed nothing.
+- Phase 2b published a curated public snapshot at
+  [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) as a
+  single commit `3a82e89`; the internal `00`–`02` documents are not included.
 
 ---
 
@@ -213,4 +216,5 @@ Phase 1 ends here. The contract is deployed and tested on Arc Testnet; the front
 is built and static-verified against the deployed address. The next gate is a
 human-owned live-USDC testnet run and source-verification decision, followed by the
 separate Phase 2 mainnet authorization. No mainnet deployment, transaction, key
-handling, spend, host, or GitHub push occurred.
+handling, or spend occurred. Phase 1 did not host or push; Phase 2b later published
+the curated repo and a testnet-only Vercel preview.

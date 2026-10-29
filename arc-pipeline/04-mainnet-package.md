@@ -45,7 +45,7 @@ C4 is closed, but execution is not authorized:
 | C2 | Real pilot / LOI | **UNRESOLVED (waived, not satisfied)** | `01-decision.md` amendment 2026-10-27 01:42 UTC. Disclosed builder-wallet demo only. |
 | C3 | Legal scope | **UNRESOLVED (waived, not satisfied)** | Same amendment. No real worker pilot without a jurisdiction check. |
 | C4 | Mainnet route, budget, wallets, funding | **CLOSED 2026-10-29** | C4 closed; 40 USDC cap authorized; every mainnet tx still per-tx approval. Public addresses in the decision file are still `<ADDR>` placeholders; fill from human records. |
-| C5 | Host, repo, builder profile | **PARTIAL** | Builder profile URL exists; public repo `shiftproof` approved; Vercel preview deployed at https://shiftproof-e51a9julz-oxunify.vercel.app (testnet-only); repo push pending. |
+| C5 | Host, repo, builder profile | **PARTIAL** | Builder profile URL exists; public repo live at https://github.com/unifyWeb3/shiftproof; Vercel preview live at https://shiftproof-e51a9julz-oxunify.vercel.app (testnet-only); video pending. |
 | C6 | Scope discipline | **VERIFIED for V1 scope** | Attested hours + claim + refund; no disputes/QR/tax/lending. |
 | C7 | Fallback trigger acknowledged | **VERIFIED** | `01-decision.md` §5.1; PartnerRail is not activated. |
 | V1 | Arc Foundry installs | **UNVERIFIED — Path A fallback only** | Install commands prepared; not completed in this environment. Primary Path B does not require it. |
@@ -1070,7 +1070,7 @@ Token balances below are **ERC-20 USDC, before gas**. Gas is paid from the same 
 
 ### 5.8 UI sequence for the demo/video
 
-The app must first be mainnet-configured; see §5.11. Until then, this sequence is **`UNVERIFIED`**.
+The app must first be mainnet-configured; see §5.11. Until then, this sequence is **`UNVERIFIED`**. In this section, `⟨HOST_URL⟩` means the mainnet-configured production URL, **not** the current testnet-only Vercel preview.
 
 1. Open `⟨HOST_URL⟩` in a clean browser profile. Confirm the network badge says **Arc Mainnet (5042)** and the contract matches `⟨SHIFTPROOF⟩`.
 2. `/employer` — connect employer wallet. Create A:
@@ -1135,6 +1135,9 @@ Then A/B/C shift IDs are 2/3/4 and final `nextShiftId=5`. Total with S0 is 36.25
 - `app/src/components/ShiftCard.tsx` — hardcoded `https://explorer.testnet.arc.io` links.
 - `app/src/pages/ShiftReceipt.tsx` — hardcoded `https://explorer.testnet.arc.io` links.
 - `app/README.md` — testnet deployment table and localhost instructions.
+- `app/AGENTS.md` — testnet deployment and explorer link.
+- `app/TESTNET-E2E.md` — Arc Testnet fork/RPC/faucet instructions and links.
+- `app/TESTNET-E2E-LIVE.md` — live two-wallet testnet checklist; expected results and screenshot points.
 - `app/src/onchain-facts.ts` — already contains Arc mainnet chain `5042`; generated, so confirm it is current rather than assuming it is testnet-only.
 
 **Required changes before any mainnet video:**
@@ -1144,16 +1147,16 @@ Then A/B/C shift IDs are 2/3/4 and final `nextShiftId=5`. Total with S0 is 36.25
 | `app/deployments.json` | Add an `arcMainnet` entry with the real address/tx/block; keep `verified:false` until explorer verification. | `UNVERIFIED` |
 | `app/src/lib/contract.ts` | Read the mainnet entry; set `CHAIN_ID=5042`, `CHAIN_NAME='Arc'`, `CHAIN_RPC='https://rpc.mainnet.arc.io'`, `EXPLORER_BASE='https://explorer.arc.io'`. | `UNVERIFIED` |
 | `app/src/config.ts` | Import `arc` from `viem/chains` (documented built-in), add `http('https://rpc.mainnet.arc.io')`, keep `mainnet` for ENS. | `UNVERIFIED` |
-| `app/src/pages/Proof.tsx` | Replace testnet facts with mainnet facts; replace the Studio-preview app URL with `⟨HOST_URL⟩`; correct the test provenance and bytecode wording. | `UNVERIFIED` |
+| `app/src/pages/Proof.tsx` | Replace testnet facts with mainnet facts; replace the Studio-preview app URL with `window.location.origin` and label it as the hosted app; correct the test provenance and bytecode wording. The prepared Studio prompt covers this; it has not been run. | `UNVERIFIED` — prompt prepared, not run |
 | `app/src/pages/Help.tsx` | Update network setup, USDC faucet FAQ, hardcoded testnet RPC/explorer URLs, and “Is this on mainnet?”; keep the disclosed-demo and no-dispute language. | `UNVERIFIED` |
 | `app/src/components/Layout.tsx` | Remove “testnet only”; use `CHAIN_NAME` / `CHAIN_ID`. | `UNVERIFIED` |
 | `app/src/pages/Home.tsx` | Replace “Arc Testnet” with `CHAIN_NAME`; update the hero copy. | `UNVERIFIED` |
 | `app/src/components/ShiftCard.tsx` | Replace hardcoded `explorer.testnet.arc.io` links with `explorerTx` / `explorerAddr` / `EXPLORER_BASE`. | `UNVERIFIED` |
 | `app/src/pages/ShiftReceipt.tsx` | Replace hardcoded `explorer.testnet.arc.io` links with the shared explorer helpers. | `UNVERIFIED` |
 | `app/src/onchain-facts.ts` | Verify the generated file still contains the Arc mainnet `5042` facts; do not hand-edit generated data. | `VERIFIED` current; `UNVERIFIED` after regeneration |
-| `app/package.json` | Add a real `build` script (`vite build`) or correct the README; current scripts have `check` but no `build`. | `UNVERIFIED` |
+| `app/package.json` | Add a real `build` script (`vite build`) or use `bunx vite build`; current scripts have `check` but no `build`. | `VERIFIED` doc fix; script optional |
 | `app/package.json` | `contracts:build`/`contracts:test` call `forge`, not `arc-forge`; document or change for Arc Foundry. | `UNVERIFIED` — minor |
-| `app/README.md` | Use the §6 draft; add the build/deploy/evidence links. | `UNVERIFIED` |
+| `app/README.md` | Use the §6 draft; add the build/deploy/evidence links. The published copy now uses `bunx vite build` and corrects the invariant count. | `VERIFIED` doc fix |
 | `arc-pipeline/04-approvals.md` | Create at execution; no pre-filled approvals. | `UNVERIFIED` |
 | `arc-pipeline/04-evidence/mainnet/` | Create at execution; receipts, reads, screenshots, failed tx records. | `UNVERIFIED` |
 
@@ -1161,7 +1164,7 @@ Then A/B/C shift IDs are 2/3/4 and final `nextShiftId=5`. Total with S0 is 36.25
 
 1. `Proof.tsx` says “76/76 Foundry unit/fuzz/invariant tests pass — Confirmed locally with forge test.” Phase 1 says local Foundry was not installed; Studio was the test authority. Change to “Studio test run; raw log at `03-evidence/s2-forge-test.log`.” **Status: `UNRESOLVED` — factual copy defect.**
 2. `Proof.tsx` labels “ABI match between artifact and deployed bytecode” as false. The runtime bytecode actually matches the artifact except the five immutable bytes; ABI is not bytecode. Replace with two separate lines: “runtime bytecode matches artifact except immutables” (`VERIFIED` on testnet) and “source verified on explorer” (`UNVERIFIED`). **Status: `UNRESOLVED` — copy defect.**
-3. `Proof.tsx` calls the Studio preview the public app URL in two places (Deployment InfoRow and Links). Studio does not host public apps. Replace both with `⟨HOST_URL⟩`. **Status: `UNRESOLVED`.**
+3. `Proof.tsx` calls the Studio preview the public app URL in two places (Deployment InfoRow and Links). Studio does not host public apps. A Vercel preview is now live, but the page has not been wired to it. The prepared Studio prompt replaces both with `window.location.origin` and labels the result as the hosted app. **Status: `UNRESOLVED` — prompt prepared, not run.**
 4. `Help.tsx` hardcodes testnet RPC/explorer/faucet details and says “No. ShiftProof V1 is deployed on Arc Testnet only.” Update only after a real mainnet deploy; do not pre-claim mainnet. **Status: `UNVERIFIED`.**
 5. `03-phase1-report.md` §1 and `02-architecture-spec.md` §15.5 say the deploy script checks deployer gas balance. It does not. Correct the docs or add the external check to the runbook. **Status: `UNRESOLVED` — documentation/code discrepancy.**
 6. `Layout.tsx` footer says “testnet only”; `Home.tsx` hero says “Arc Testnet”; `ShiftCard.tsx` and `ShiftReceipt.tsx` hardcode `explorer.testnet.arc.io`. These are visible in the video. Fix before recording. **Status: `UNRESOLVED`.**
@@ -1189,14 +1192,14 @@ The full claim-to-evidence register is [E24 §8]; unresolved reproducibility gap
 | Asset | Value | Status |
 |---|---|---|
 | Hosted app | [shiftproof-e51a9julz-oxunify.vercel.app](https://shiftproof-e51a9julz-oxunify.vercel.app) | `VERIFIED` testnet-only preview |
-| Public repo | `⟨REPO_URL⟩` | `UNRESOLVED` |
+| Public repo | [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) | `VERIFIED` |
 | Demo video | `⟨VIDEO_URL⟩` | `UNRESOLVED` |
 | Arc Studio project | [studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | `VERIFIED` URL exists; public access `UNRESOLVED` |
 | Builder profile | [x.com/oxunify](https://x.com/oxunify) | `VERIFIED` URL provided; ownership `UNVERIFIED` |
 | Arc mainnet contract | `⟨MAINNET_CONTRACT⟩` | `UNVERIFIED` — not deployed |
 | Arc mainnet deploy tx | `⟨MAINNET_DEPLOY_TX⟩` | `UNVERIFIED` — not deployed |
 | Source verification | `⟨VERIFICATION_URL⟩` | `UNRESOLVED` |
-| Proof page | `⟨PROOF_URL⟩` | `UNRESOLVED` |
+| Proof page | [shiftproof-e51a9julz-oxunify.vercel.app/proof](https://shiftproof-e51a9julz-oxunify.vercel.app/proof) | `VERIFIED` testnet-only preview |
 | Mainnet demo txs | `⟨MAINNET_DEMO_TXS⟩` | `UNVERIFIED` — not run |
 | Arc testnet contract | [`0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6`](https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6) | `VERIFIED` |
 | Arc testnet deploy tx | [`0x89b616d…dcfd52`](https://explorer.testnet.arc.io/tx/0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52) | `VERIFIED` |
@@ -1401,11 +1404,12 @@ The app preview is **testnet-only**. These files contain testnet facts or links 
 | `app/README.md` | Testnet deployment table, testnet connection instructions; build command is `bunx vite build`. |
 | `app/AGENTS.md` | Testnet deployment/explorer link. |
 | `app/TESTNET-E2E.md` | Arc Testnet fork/RPC/faucet instructions and links. |
+| `app/TESTNET-E2E-LIVE.md` | Live two-wallet testnet checklist; expected results and screenshot points. |
 | `app/src/onchain-facts.ts` | Contains **both** testnet and mainnet facts; generated file, not testnet-only. Verify current before use. |
 
 ## License
 
-The contract source is SPDX `MIT`. The repository does not yet contain a top-level `LICENSE` file; add one before publishing. `UNRESOLVED`.
+The contract source is SPDX `MIT`. The public repository now contains a top-level MIT `LICENSE` file. `VERIFIED`.
 
 ````
 
@@ -1428,7 +1432,7 @@ The contract source is SPDX `MIT`. The repository does not yet contain a top-lev
 | 1:30–1:50 | Fast but honest montage: B approve 10, create 2h × 5, clock in/out, attest 1h, refund 5, claim 5; C approve 5, create 1h × 5, cancel. | “B shows partial work: ten escrowed, one hour attested, five refunded, five claimed. C cancels before clock-in and refunds all five.” | **B: 10 → 5 paid + 5 refunded**; **C: 5 refunded** | `VERIFIED` only if the corresponding mainnet txs are shown; otherwise label as planned/`UNVERIFIED`. |
 | 1:50–2:10 | Explorer: `⟨TX_A_CLAIM⟩` logs; contract page `⟨SHIFTPROOF⟩`; code tab. | “Every step is a real mainnet transaction. Here is the claim: status success, 20 USDC transferred to the worker. The contract is immutable and keyless.” | **Status: success**; **Transfer 20 USDC → worker**; **No admin, no pause, no upgrade, no fees** | `VERIFIED` at recording; source/ABI for keyless claims [E18]. |
 | 2:10–2:25 | `/proof` page and `README.md` top disclosure; source-verification status. | “Disclosure: both wallets are builder-controlled. There is no real worker pilot, no legal review, and no audit. Source verification is shown honestly — if it is pending, the page says pending.” | **Builder-controlled demo**; **No real pilot / no legal review / no audit**; **Source verification: ⟨status⟩** | `VERIFIED` — [E01 §5.1], [E02 §3], [E15]. Do not say “verified” unless the explorer shows it. |
-| 2:25–2:40 | Close on `/` and the repo link; end card with contract, Studio, repo, video. | “ShiftProof: fund a shift, attest the hours, pay in USDC. Built with Arc Studio.” | **⟨HOST_URL⟩**; **⟨REPO_URL⟩**; **⟨SHIFTPROOF⟩** | `VERIFIED` for links at recording; otherwise `UNRESOLVED`. |
+| 2:25–2:40 | Close on `/` and the repo link; end card with contract, Studio, repo, video. | “ShiftProof: fund a shift, attest the hours, pay in USDC. Built with Arc Studio.” | **⟨HOST_URL⟩**; **github.com/unifyWeb3/shiftproof**; **⟨SHIFTPROOF⟩** | `VERIFIED` for links at recording; otherwise `UNRESOLVED`. |
 
 ### 7.1 Studio workspace shot
 
@@ -1520,7 +1524,7 @@ This is the master list for the package. Inline labels above are authoritative; 
 | 27 | No mainnet key was created, read, stored, or used by the agent. | **VERIFIED** | This session; E02 §8 |
 | 28 | The app runtime/UI is currently testnet-only (`deployments.json`, `contract.ts`, `config.ts`, `Proof.tsx`, `Help.tsx`, `Layout.tsx`, `Home.tsx`, `ShiftCard.tsx`, `ShiftReceipt.tsx`). | **VERIFIED** | App source; E24 §5.11 |
 | 29 | The app has not been switched to mainnet; no mainnet build is recorded. | **VERIFIED** current source; **UNVERIFIED** mainnet build | App source |
-| 30 | Public repo `shiftproof` and Vercel preview are authorized; video is still a placeholder. | **VERIFIED** authorization; **UNRESOLVED** preview/video | E24 §0.1; this session |
+| 30 | Public repo `shiftproof` and Vercel preview are live; video is still a placeholder. | **VERIFIED** repo/preview; **UNRESOLVED** video | E24 §0.1; this session |
 | 31 | The Studio project URL exists; public accessibility is not verified. | **VERIFIED** URL; **UNRESOLVED** access | E19 |
 | 32 | The builder profile URL is `https://x.com/oxunify`; ownership is not independently verified. | **VERIFIED** URL; **UNVERIFIED** ownership | E20 |
 | 33 | C2/C3 are waived, not satisfied; the demo uses builder-controlled wallets; no real worker pilot or legal review. | **VERIFIED** | E24 §0.2 |
@@ -1547,7 +1551,7 @@ These are not cosmetic. Resolve or explicitly accept each one before execution.
 | 5 | **Spec path mismatch.** The spec’s verify command uses `src/ShiftProof.sol:ShiftProof`; the actual source is `contracts/ShiftProof.sol:ShiftProof`. | Verification command would fail. | Use the actual path in all commands. | **VERIFIED** |
 | 6 | **Proof page test provenance.** `Proof.tsx` says “Confirmed locally with forge test”; Phase 1 says local Foundry was not installed. | False provenance claim. | Change to “Studio test run; raw log at `03-evidence/s2-forge-test.log`.” | **UNRESOLVED** |
 | 7 | **Proof page bytecode label.** It labels “ABI match between artifact and deployed bytecode” false. The runtime bytecode matches except immutables; ABI is not bytecode. | Misleading status. | Split into “runtime bytecode matches artifact except immutables” and “source verified on explorer.” | **UNRESOLVED** |
-| 8 | **Proof page app URL.** It calls the Studio preview the public app URL. Studio does not host public apps. | Broken submission link. | Replace with `⟨HOST_URL⟩` after hosting. | **UNRESOLVED** |
+| 8 | **Proof page app URL.** It calls the Studio preview the public app URL. Studio does not host public apps. A Vercel preview is live, but `Proof.tsx` is not yet wired to it. | Broken submission link until the prompt is run. | Run the prepared Studio prompt to use `window.location.origin`; do not hardcode a testnet preview as the mainnet app. | **UNRESOLVED** |
 | 9 | **Several UI files show testnet facts.** `Help.tsx` says testnet only and hardcodes testnet RPC/explorer/faucet; `Layout.tsx` says “testnet only”; `Home.tsx` says “Arc Testnet”; `ShiftCard.tsx`/`ShiftReceipt.tsx` hardcode testnet explorer links. | Wrong after mainnet deploy; visible in the video. | Update all after a real mainnet deployment; keep the no-real-pilot disclosure. See §5.11. | **UNVERIFIED** |
 | 10 | **No production build script.** `package.json` has `check` but no `build`; Phase 1 used `bunx vite build`. | README instructions may fail. | README now says `bunx vite build`; adding a `build` script remains optional. | **VERIFIED doc fix** |
 | 11 | **`contracts:build`/`contracts:test` call `forge`, not `arc-forge`.** | Standard Foundry may not handle Arc-specific behavior. | Document or change the scripts; use `arc-forge` for Arc. | **UNRESOLVED** |
@@ -1556,7 +1560,7 @@ These are not cosmetic. Resolve or explicitly accept each one before execution.
 | 14 | **No explorer source verification.** | Judges cannot read verified source. | Try mainnet CLI/UI; publish source/hash fallback; never claim verified. | **UNRESOLVED** |
 | 15 | **Mainnet source verification path is inferred.** Testnet is documented; mainnet API is Cloudflare-challenged. | Verification may fail. | Attempt after deploy; have the fallback ready. | **UNRESOLVED** |
 | 16 | **App mainnet config missing.** | Cannot record the required mainnet video. | Complete §5.11, rebuild, test in a clean browser. | **UNVERIFIED** |
-| 17 | **Video missing; repo/Vercel authorized.** Public repo `shiftproof` and Vercel preview are authorized in Phase 2b; video is still a placeholder. | Submission incomplete. | Push the curated repo, deploy the preview, record the video after mainnet. | **VERIFIED authorization; UNRESOLVED assets** |
+| 17 | **Video missing; repo/Vercel live.** Public repo `shiftproof` and Vercel preview are live in Phase 2b; video is still a placeholder. | Submission incomplete. | Record the video after mainnet; keep the repo and preview links current. | **VERIFIED repo/preview; UNRESOLVED video** |
 | 18 | **C2/C3 waived, not satisfied.** | No real pilot/legal review. | Keep disclosed-demo framing; no real worker without jurisdiction check. | **VERIFIED waiver** |
 | 19 | **Invariant count mismatch (corrected).** `03-phase1-report.md` §1/§2 said five invariants; `ShiftProof.t.sol` has six `invariant_*` functions and the S2 invariant suite reports 6 passed. | The test summary undercounted the invariant suite. | Phase 1 report and `app/README.md` now say “six invariants” and list them. | **VERIFIED corrected** |
 
