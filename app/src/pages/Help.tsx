@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import { CONTRACT_ADDRESS, CHAIN_ID, DEPLOYMENT_TX, explorerAddr, explorerTx, CHAIN_NAME } from '../lib/contract'
 import { fmtAddr } from '../lib/format'
+import { ACTIVE_NETWORK, hasContract } from '../lib/networks'
 
 const glass = {
   border: '1px solid var(--border)',
@@ -17,11 +18,13 @@ const FAQS = [
   },
   {
     q: 'Which network should I be on?',
-    a: `Arc Testnet (chain ID ${CHAIN_ID}). Add it in your wallet: RPC https://rpc.testnet.arc.io, chain ID ${CHAIN_ID}, currency symbol USDC (18 decimals for gas), explorer https://explorer.testnet.arc.io. The app will show a banner and a switch button if you are on the wrong chain.`,
+    a: `${ACTIVE_NETWORK.label} (chain ID ${CHAIN_ID}). Add it in your wallet: RPC ${ACTIVE_NETWORK.rpcUrl}, chain ID ${CHAIN_ID}, currency symbol USDC (18 decimals for gas), explorer ${ACTIVE_NETWORK.explorerUrl}. The app will show a banner and a switch button if you are on the wrong chain.`,
   },
   {
-    q: 'How do I get testnet USDC?',
-    a: 'Use the "Get test USDC" button in the Arc Studio sidebar. It will drip Arc Testnet USDC to your connected wallet for free. Testnet USDC has no real-world value.',
+    q: ACTIVE_NETWORK.isTestnet ? 'How do I get testnet USDC?' : 'How do I get USDC?',
+    a: ACTIVE_NETWORK.isTestnet
+      ? `Use the "Get test USDC" button in the Arc Studio sidebar. It will drip ${ACTIVE_NETWORK.label} USDC to your connected wallet for free. Testnet USDC has no real-world value.`
+      : 'Acquire USDC on Arc and keep enough for gas. This build has no ShiftProof contract deployed on Arc mainnet, so no escrow transaction can be made here.',
   },
   {
     q: 'Why does creating a shift need two transactions?',
@@ -57,7 +60,9 @@ const FAQS = [
   },
   {
     q: 'Is this on mainnet?',
-    a: 'No. ShiftProof V1 is deployed on Arc Testnet only. Testnet funds have no real-world value. A mainnet deployment would require a separate deploy and is not part of this demo.',
+    a: ACTIVE_NETWORK.isTestnet
+      ? `No. ShiftProof V1 is deployed on ${ACTIVE_NETWORK.label} only. Testnet funds have no real-world value. A mainnet deployment would require a separate deploy and is not part of this demo.`
+      : 'This build targets Arc mainnet, but ShiftProof V1 is not deployed there. The demo contract is on testnet only; no mainnet funds are at risk in this build.',
   },
   {
     q: 'Why does localStorage matter?',
@@ -81,6 +86,20 @@ function FAQ({ q, a }: { q: string; a: string }) {
 }
 
 export default function Help() {
+  const contractRows: { label: string; value: string; link?: string; mono?: boolean }[] = hasContract
+    ? [
+        { label: 'Address', value: fmtAddr(CONTRACT_ADDRESS), link: explorerAddr(CONTRACT_ADDRESS) },
+        { label: 'Full address', value: CONTRACT_ADDRESS, mono: true },
+        { label: 'Network', value: `${CHAIN_NAME} (chain ${CHAIN_ID})` },
+        ...(DEPLOYMENT_TX
+          ? [{ label: 'Deploy tx', value: fmtAddr(DEPLOYMENT_TX), link: explorerTx(DEPLOYMENT_TX) }]
+          : []),
+      ]
+    : [
+        { label: 'Network', value: `${CHAIN_NAME} (chain ${CHAIN_ID})` },
+        { label: 'Status', value: 'Not deployed on this network' },
+      ]
+
   return (
     <div className="space-y-5">
       <h1 className="display text-2xl font-bold" style={{ color: 'var(--ink)' }}>Help</h1>
@@ -89,12 +108,7 @@ export default function Help() {
       <section className="rounded-3xl p-5 space-y-3" style={glass}>
         <h2 className="font-semibold text-sm" style={{ color: 'var(--ink)' }}>Contract details</h2>
         <div className="space-y-2">
-          {[
-            { label: 'Address', value: fmtAddr(CONTRACT_ADDRESS), link: explorerAddr(CONTRACT_ADDRESS) },
-            { label: 'Full address', value: CONTRACT_ADDRESS, mono: true },
-            { label: 'Network', value: `${CHAIN_NAME} (chain ${CHAIN_ID})` },
-            { label: 'Deploy tx', value: fmtAddr(DEPLOYMENT_TX), link: explorerTx(DEPLOYMENT_TX) },
-          ].map(r => (
+          {contractRows.map(r => (
             <div key={r.label} className="flex items-center justify-between gap-2">
               <span className="text-xs" style={{ color: 'var(--muted)' }}>{r.label}</span>
               {r.link ? (
@@ -111,9 +125,11 @@ export default function Help() {
             </div>
           ))}
         </div>
-        <p className="text-xs" style={{ color: 'var(--subtle)' }}>
-          Source is not verified on the explorer. The ABI is embedded from the compiled artifact.
-        </p>
+        {hasContract && (
+          <p className="text-xs" style={{ color: 'var(--subtle)' }}>
+            Source is not verified on the explorer. The ABI is embedded from the compiled artifact.
+          </p>
+        )}
       </section>
 
       {/* Status flow */}
@@ -156,7 +172,9 @@ export default function Help() {
         style={{ ...glass, border: '1px solid var(--danger)', background: 'rgba(186,43,76,0.04)' }}>
         <h2 className="font-semibold text-sm" style={{ color: 'var(--danger)' }}>Risk disclosures</h2>
         <ul className="text-xs space-y-1.5 list-disc pl-4" style={{ color: 'var(--ink-2)' }}>
-          <li>Testnet only. All tokens have no real-world value.</li>
+          <li>{ACTIVE_NETWORK.isTestnet
+            ? 'Testnet only. All tokens have no real-world value.'
+            : 'No contract is deployed on this network in this build. Do not send funds.'}</li>
           <li>Attestation is employer trust — there is no trustless verification of hours worked.</li>
           <li>No dispute mechanism. Disagreements must be resolved off-chain.</li>
           <li>No fees beyond Arc network gas. No admin, no pause, no upgrade.</li>

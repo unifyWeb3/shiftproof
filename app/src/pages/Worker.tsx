@@ -4,8 +4,9 @@ import { erc20Abi } from 'viem'
 import { Plus, RefreshCw } from 'lucide-react'
 import {
   ABI, CONTRACT_ADDRESS, USDC_ADDRESS, CHAIN_ID,
-  type ShiftTuple,
+  STATUS_LABELS, type ShiftTuple,
 } from '../lib/contract'
+import { ACTIVE_NETWORK, hasContract } from '../lib/networks'
 import { fmtUsdc, fmtAddr, fmtSeconds } from '../lib/format'
 import {
   addAssignedShift, getAssignedShifts,
@@ -28,7 +29,7 @@ function useShift(id: number | null) {
     address: CONTRACT_ADDRESS, abi: ABI, functionName: 'getShift',
     args: id !== null ? [BigInt(id)] : undefined,
     chainId: CHAIN_ID,
-    query: { enabled: id !== null, refetchInterval: 8000 },
+    query: { enabled: id !== null && hasContract, refetchInterval: 8000 },
   })
 }
 
@@ -72,18 +73,26 @@ export default function Worker() {
   const selectedShift = useShift(actionId)
   const shiftData = selectedShift.data as ShiftTuple | undefined
 
-  // Role check: only show write actions if connected wallet IS the worker
-  const isWorker = address && shiftData &&
-    shiftData.worker.toLowerCase() === address.toLowerCase()
+  // Role check
+  const isWorker = !!(address && shiftData &&
+    shiftData.worker.toLowerCase() === address.toLowerCase())
 
-  // Action availability
-  const showClockIn  = isWorker && shiftData.status === 1 /* Funded */
-  const showClockOut = isWorker && shiftData.status === 2 /* Active */
-  const showClaim    = isWorker && shiftData.status === 4 /* Attested */
+  // Args — always built; disabledReason gates whether TxButton actually fires
+  const clockInArgs  = actionId !== null ? { address: CONTRACT_ADDRESS, abi: ABI, functionName: 'clockIn',  args: [BigInt(actionId)] } : null
+  const clockOutArgs = actionId !== null ? { address: CONTRACT_ADDRESS, abi: ABI, functionName: 'clockOut', args: [BigInt(actionId)] } : null
+  const claimArgs    = actionId !== null ? { address: CONTRACT_ADDRESS, abi: ABI, functionName: 'claim',    args: [BigInt(actionId)] } : null
 
-  const clockInArgs  = actionId !== null && showClockIn  ? { address: CONTRACT_ADDRESS, abi: ABI, functionName: 'clockIn',  args: [BigInt(actionId)] } : null
-  const clockOutArgs = actionId !== null && showClockOut ? { address: CONTRACT_ADDRESS, abi: ABI, functionName: 'clockOut', args: [BigInt(actionId)] } : null
-  const claimArgs    = actionId !== null && showClaim    ? { address: CONTRACT_ADDRESS, abi: ABI, functionName: 'claim',    args: [BigInt(actionId)] } : null
+  const workerReason = (action: string) => {
+    if (!isConnected) return `Connect wallet to ${action}.`
+    if (wrongChain)   return `Wrong network — switch to ${ACTIVE_NETWORK.label}.`
+    if (!shiftData)   return `Load a shift ID first.`
+    if (!isWorker)    return `Only the assigned worker (${fmtAddr(shiftData.worker)}) can ${action}.`
+    return undefined
+  }
+
+  const clockInReason  = workerReason('clock in')  ?? (shiftData?.status !== 1 ? `Shift status is ${STATUS_LABELS[shiftData!.status]}; clock in requires Funded.` : undefined)
+  const clockOutReason = workerReason('clock out') ?? (shiftData?.status !== 2 ? `Shift status is ${STATUS_LABELS[shiftData!.status]}; clock out requires Active.` : undefined)
+  const claimReason    = workerReason('claim')     ?? (shiftData?.status !== 4 ? `Shift status is ${STATUS_LABELS[shiftData!.status]}; claim requires Attested.` : undefined)
 
   const onSuccess = (hash: `0x${string}`, type: 'clockIn' | 'clockOut' | 'claim') => {
     if (actionId !== null) updateShiftTxRecord(actionId, { [type]: hash })
@@ -159,39 +168,55 @@ export default function Worker() {
                   </span>
                 </div>
               )}
-              {!isWorker && address && shiftData && (
-                <p className="text-xs mt-1" style={{ color: 'var(--danger)' }}>
-                  Your wallet is not the assigned worker. Connect {fmtAddr(shiftData.worker)} to take action.
+              {address && shiftData && !isWorker && (
+                <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
+                  Connected wallet is not the assigned worker ({fmtAddr(shiftData.worker)}).
                 </p>
               )}
             </div>
           )}
 
-          {showClockIn && (
-            <TxButton txArgs={clockInArgs} label="Clock in"
+          {/* Clock In — always shown when a shift is loaded */}
+          {shiftData && (
+            <TxButton txArgs={clockInReason ? null : clockInArgs}
+              label="Clock in"
               shiftId={actionId ?? undefined}
               detail="Records your start time onchain. Shift moves to Active."
-              onSuccess={h => onSuccess(h, 'clockIn')} disabled={wrongChain} />
+              onSuccess={h => onSuccess(h, 'clockIn')}
+              disabled={!!clockInReason}
+              disabledReason={clockInReason} />
           )}
-          {showClockOut && (
-            <TxButton txArgs={clockOutArgs} label="Clock out"
+
+          {/* Clock Out — always shown when a shift is loaded */}
+          {shiftData && (
+            <TxButton txArgs={clockOutReason ? null : clockOutArgs}
+              label="Clock out"
               shiftId={actionId ?? undefined}
               detail="Records your end time onchain. Employer can now attest hours."
-              onSuccess={h => onSuccess(h, 'clockOut')} disabled={wrongChain} />
+              onSuccess={h => onSuccess(h, 'clockOut')}
+              disabled={!!clockOutReason}
+              disabledReason={clockOutReason} />
           )}
-          {showClaim && (
+
+          {/* Claim — always shown when a shift is loaded */}
+          {shiftData && (
             <div className="space-y-2">
-              <div className="rounded-xl px-3 py-2"
-                style={{ background: 'rgba(26,128,71,0.08)', border: '1px solid rgba(26,128,71,0.2)' }}>
-                <p className="text-xs" style={{ color: 'var(--success)' }}>
-                  Ready to claim {fmtUsdc(shiftData.owed)} USDC (from contract owed field)
-                </p>
-              </div>
-              <TxButton txArgs={claimArgs} label={`Claim ${fmtUsdc(shiftData.owed)} USDC`}
+              {!claimReason && shiftData.owed > 0n && (
+                <div className="rounded-xl px-3 py-2"
+                  style={{ background: 'rgba(26,128,71,0.08)', border: '1px solid rgba(26,128,71,0.2)' }}>
+                  <p className="text-xs" style={{ color: 'var(--success)' }}>
+                    Ready to claim {fmtUsdc(shiftData.owed)} USDC (owed field from contract)
+                  </p>
+                </div>
+              )}
+              <TxButton txArgs={claimReason ? null : claimArgs}
+                label={shiftData.owed > 0n && !claimReason ? `Claim ${fmtUsdc(shiftData.owed)} USDC` : 'Claim USDC'}
                 shiftId={actionId ?? undefined}
-                amount={shiftData.owed}
+                amount={shiftData.owed > 0n ? shiftData.owed : undefined}
                 detail="Transfers owed USDC to you. Any unused escrow stays for the employer to refund."
-                onSuccess={h => onSuccess(h, 'claim')} disabled={wrongChain} />
+                onSuccess={h => onSuccess(h, 'claim')}
+                disabled={!!claimReason}
+                disabledReason={claimReason} />
             </div>
           )}
 

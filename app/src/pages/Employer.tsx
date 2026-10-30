@@ -4,8 +4,9 @@ import { erc20Abi, decodeEventLog } from 'viem'
 import { Plus, RefreshCw } from 'lucide-react'
 import {
   ABI, CONTRACT_ADDRESS, USDC_ADDRESS, CHAIN_ID,
-  type ShiftTuple,
+  STATUS_LABELS, type ShiftTuple,
 } from '../lib/contract'
+import { ACTIVE_NETWORK, hasContract } from '../lib/networks'
 import { fmtUsdc, fmtAddr, fmtSeconds, parseUsdcInput, decodeContractError } from '../lib/format'
 import {
   addCreatedShift, getCreatedShifts,
@@ -30,7 +31,7 @@ function useShift(id: number | null) {
     functionName: 'getShift',
     args: id !== null ? [BigInt(id)] : undefined,
     chainId: CHAIN_ID,
-    query: { enabled: id !== null, refetchInterval: 8000 },
+    query: { enabled: id !== null && hasContract, refetchInterval: 8000 },
   })
 }
 
@@ -89,7 +90,7 @@ export default function Employer() {
     address: USDC_ADDRESS, abi: erc20Abi, functionName: 'allowance',
     args: address ? [address, CONTRACT_ADDRESS] : undefined,
     chainId: CHAIN_ID,
-    query: { enabled: !!address, refetchInterval: 8000 },
+    query: { enabled: !!address && hasContract, refetchInterval: 8000 },
   }) as { data: bigint | undefined; refetch: () => void }
 
   const selectedShift = useShift(actionId)
@@ -117,6 +118,7 @@ export default function Employer() {
   // we keep TxButton for approve; use direct async for create
   const [creating, setCreating] = useState(false)
   const handleCreate = async () => {
+    if (!hasContract) { setCreateErr('ShiftProof is not deployed on this network.'); return }
     if (!publicClient || !walletClient || !createReady || needsApproval) return
     setCreateErr(null)
     setCreateStatus(null)
@@ -182,23 +184,17 @@ export default function Employer() {
     args: [BigInt(actionId), attestSecs],
   } : null
 
-  // Cancel (only in Funded status === 1)
-  const canCancel = shiftData && shiftData.status === 1
-  const cancelTxArgs = actionId !== null && canCancel ? {
+  const cancelTxArgs = actionId !== null && shiftData?.status === 1 ? {
     address: CONTRACT_ADDRESS, abi: ABI, functionName: 'cancel', args: [BigInt(actionId)],
   } : null
 
-  // refundUnused: status === 4 (Attested) and escrow > owed, OR status === 5 (Claimed) and escrow > 0
-  const canRefund = shiftData && (
+  const refundAvailable = shiftData && (
     (shiftData.status === 4 && shiftData.escrow > shiftData.owed) ||
     (shiftData.status === 5 && shiftData.escrow > 0n)
   )
-  const refundTxArgs = actionId !== null && canRefund ? {
+  const refundTxArgs = actionId !== null && refundAvailable ? {
     address: CONTRACT_ADDRESS, abi: ABI, functionName: 'refundUnused', args: [BigInt(actionId)],
   } : null
-
-  // Can attest: status Funded(1), Active(2), or AwaitingAttestation(3)
-  const canAttest = shiftData && (shiftData.status === 1 || shiftData.status === 2 || shiftData.status === 3)
 
   const onActionSuccess = (hash: `0x${string}`, type: 'attest' | 'cancel' | 'refund') => {
     if (actionId !== null) updateShiftTxRecord(actionId, { [type]: hash })
@@ -280,18 +276,31 @@ export default function Employer() {
             <TxButton txArgs={approveTxArgs} label={`Allow ${fmtUsdc(escrowNeeded)} USDC`}
               loadingLabel="Approving..." amount={escrowNeeded}
               detail="Exact USDC approval to ShiftProof contract. Not unlimited."
-              onSuccess={() => { void refetchAllowance(); setCreateErr(null) }}
+              onSuccess={() => { refetchAllowance(); setCreateErr(null) }}
               onError={setCreateErr} disabled={!createReady || wrongChain} />
           ) : (
             <button
               onClick={() => { void handleCreate() }}
-              disabled={!createReady || creating || wrongChain || !isConnected}
+              disabled={!createReady || creating || wrongChain || !isConnected || !hasContract}
               className="w-full rounded-2xl py-3.5 text-sm font-semibold text-white transition-all hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               style={{ background: 'var(--accent)' }}>
               {creating ? 'Creating...' : 'Create shift'}
             </button>
           )}
 
+          {!hasContract ? (
+            <p className="text-xs text-center" style={{ color: 'var(--muted)' }}>
+              ShiftProof is not deployed on this network.
+            </p>
+          ) : !isConnected ? (
+            <p className="text-xs text-center" style={{ color: 'var(--muted)' }}>
+              Connect wallet to create a shift.
+            </p>
+          ) : wrongChain ? (
+            <p className="text-xs text-center" style={{ color: 'var(--muted)' }}>
+              Wrong network — switch to {ACTIVE_NETWORK.label}.
+            </p>
+          ) : null}
           {createStatus && <p className="text-xs" style={{ color: 'var(--success)' }}>{createStatus}</p>}
           {createErr    && <p className="text-xs" style={{ color: 'var(--danger)' }}>{createErr}</p>}
         </section>
@@ -340,53 +349,96 @@ export default function Employer() {
             </div>
           )}
 
-          {/* Attest */}
-          {canAttest && (
-            <div className="space-y-2">
-              <label className="block text-xs" style={{ color: 'var(--muted)' }}>
-                Attested seconds (0 – {shiftData.maxSeconds})
-              </label>
-              <input inputMode="numeric" value={attestSecsStr}
-                onChange={e => setAttestSecsStr(e.target.value.replace(/[^0-9]/g,''))}
-                placeholder={`e.g. ${shiftData.maxSeconds}`}
-                className="w-full rounded-xl px-3 py-2.5 text-sm outline-none tabular-nums"
-                style={{ border: '1px solid var(--border)', background: 'var(--surface-strong)', color: 'var(--ink)' }} />
-              {attestSecsStr && (
+          {/* Attest — visible when shift loaded; disabled with reason when not allowed */}
+          {shiftData && (() => {
+            const isEmployer = address && shiftData.employer.toLowerCase() === address.toLowerCase()
+            const statusOk = shiftData.status === 1 || shiftData.status === 2 || shiftData.status === 3
+            const attestDisabledReason = !isConnected
+              ? 'Connect wallet to attest.'
+              : wrongChain ? `Wrong network — switch to ${ACTIVE_NETWORK.label}.`
+              : !isEmployer ? `Only the employer (${fmtAddr(shiftData.employer)}) can attest.`
+              : !statusOk ? `Shift status is ${STATUS_LABELS[shiftData.status]}; attest requires Funded, Active, or Awaiting Attestation.`
+              : attestSecsStr && attestSecs > shiftData.maxSeconds ? `${attestSecs}s exceeds max ${shiftData.maxSeconds}s.`
+              : undefined
+            return (
+              <div className="space-y-2">
+                <label className="block text-xs" style={{ color: 'var(--muted)' }}>
+                  Attest seconds (0 – {shiftData.maxSeconds})
+                </label>
+                <input inputMode="numeric" value={attestSecsStr}
+                  onChange={e => setAttestSecsStr(e.target.value.replace(/[^0-9]/g,''))}
+                  placeholder={`e.g. ${shiftData.maxSeconds}`}
+                  className="w-full rounded-xl px-3 py-2.5 text-sm outline-none tabular-nums"
+                  style={{ border: '1px solid var(--border)', background: 'var(--surface-strong)', color: 'var(--ink)' }} />
+                {attestSecsStr && (
+                  <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                    Owed: {fmtUsdc((shiftData.hourlyRate * BigInt(attestSecs)) / BigInt(3600))} USDC for {fmtSeconds(attestSecs)}
+                  </p>
+                )}
+                <TxButton txArgs={attestDisabledReason ? null : attestTxArgs}
+                  label="Attest" loadingLabel="Attesting..."
+                  shiftId={actionId ?? undefined}
+                  amount={attestSecs > 0 ? (shiftData.hourlyRate * BigInt(attestSecs)) / BigInt(3600) : undefined}
+                  detail="Sets the attested seconds and owed amount. The worker can then claim."
+                  onSuccess={h => onActionSuccess(h, 'attest')}
+                  disabled={!!attestDisabledReason || wrongChain}
+                  disabledReason={attestDisabledReason} />
+              </div>
+            )
+          })()}
+
+          {/* Cancel — visible when shift loaded; disabled with reason */}
+          {shiftData && (() => {
+            const isEmployer = address && shiftData.employer.toLowerCase() === address.toLowerCase()
+            const cancelDisabledReason = !isConnected
+              ? 'Connect wallet to cancel.'
+              : wrongChain ? `Wrong network — switch to ${ACTIVE_NETWORK.label}.`
+              : !isEmployer ? `Only the employer (${fmtAddr(shiftData.employer)}) can cancel.`
+              : shiftData.status !== 1 ? `Shift status is ${STATUS_LABELS[shiftData.status]}; cancel requires Funded.`
+              : undefined
+            return (
+              <TxButton txArgs={cancelDisabledReason ? null : cancelTxArgs}
+                label="Cancel shift" loadingLabel="Cancelling..."
+                shiftId={actionId ?? undefined}
+                detail="Returns full escrow to the employer. Only available in Funded status."
+                variant="danger"
+                onSuccess={h => onActionSuccess(h, 'cancel')}
+                disabled={!!cancelDisabledReason || wrongChain}
+                disabledReason={cancelDisabledReason} />
+            )
+          })()}
+
+          {/* RefundUnused — permissionless; visible when shift loaded */}
+          {shiftData && (() => {
+            const refundAvailable =
+              (shiftData.status === 4 && shiftData.escrow > shiftData.owed) ||
+              (shiftData.status === 5 && shiftData.escrow > 0n)
+            const refundDisabledReason = !isConnected
+              ? 'Connect wallet to refund.'
+              : wrongChain
+              ? `Wrong network — switch to ${ACTIVE_NETWORK.label}.`
+              : !refundAvailable
+              ? `No unused escrow to refund at this stage (status: ${STATUS_LABELS[shiftData.status]}).`
+              : undefined
+            const refundAmt = refundAvailable
+              ? (shiftData.status === 4 ? shiftData.escrow - shiftData.owed : shiftData.escrow)
+              : undefined
+            return (
+              <div className="space-y-1">
+                <TxButton txArgs={refundDisabledReason ? null : refundTxArgs}
+                  label="Refund unused USDC" loadingLabel="Refunding..."
+                  shiftId={actionId ?? undefined}
+                  amount={refundAmt}
+                  detail="Permissionless. Returns unused escrow to the employer."
+                  onSuccess={h => onActionSuccess(h, 'refund')}
+                  disabled={!!refundDisabledReason || wrongChain}
+                  disabledReason={refundDisabledReason} />
                 <p className="text-xs" style={{ color: 'var(--muted)' }}>
-                  Owed: {fmtUsdc((shiftData.hourlyRate * BigInt(attestSecs)) / BigInt(3600))} USDC for {fmtSeconds(attestSecs)}
+                  Refund always goes to the employer address, regardless of who calls this.
                 </p>
-              )}
-              <TxButton txArgs={attestTxArgs} label="Attest" loadingLabel="Attesting..."
-                shiftId={actionId ?? undefined}
-                amount={attestSecs > 0 ? (shiftData.hourlyRate * BigInt(attestSecs)) / BigInt(3600) : undefined}
-                detail="Sets the attested seconds and owed amount. The worker can then claim."
-                onSuccess={h => onActionSuccess(h, 'attest')}
-                disabled={attestSecs < 0 || (shiftData ? attestSecs > shiftData.maxSeconds : true) || wrongChain} />
-            </div>
-          )}
-
-          {/* Cancel — only Funded */}
-          {canCancel && (
-            <TxButton txArgs={cancelTxArgs} label="Cancel shift" loadingLabel="Cancelling..."
-              shiftId={actionId ?? undefined}
-              detail="Returns full escrow to the employer. Only available while status is Funded."
-              variant="danger"
-              onSuccess={h => onActionSuccess(h, 'cancel')}
-              disabled={wrongChain} />
-          )}
-
-          {/* RefundUnused — permissionless, refund goes to employer */}
-          {canRefund && (
-            <div className="space-y-1">
-              <TxButton txArgs={refundTxArgs} label="Refund unused USDC" loadingLabel="Refunding..."
-                shiftId={actionId ?? undefined}
-                amount={shiftData ? shiftData.escrow - shiftData.owed : undefined}
-                detail="Permissionless. Returns unused escrow to the employer. The owed amount stays with the worker."
-                onSuccess={h => onActionSuccess(h, 'refund')}
-                disabled={wrongChain} />
-              <p className="text-xs" style={{ color: 'var(--muted)' }}>Refund always goes to the employer address.</p>
-            </div>
-          )}
+              </div>
+            )
+          })()}
 
           {actionStatus && <p className="text-xs" style={{ color: 'var(--success)' }}>{actionStatus}</p>}
         </section>

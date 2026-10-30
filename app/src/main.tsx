@@ -40,7 +40,7 @@ const StudioWatermark = () => (
     rel="noopener noreferrer"
     style={{
       position: 'fixed',
-      bottom: '16px',
+      bottom: 'calc(64px + 16px)', /* sits above the 64px bottom nav on all viewports */
       right: '16px',
       display: 'flex',
       alignItems: 'center',

@@ -2,7 +2,8 @@ import { type ReactNode } from 'react'
 import { ConnectKitButton } from 'connectkit'
 import { ShieldCheck, Briefcase, HardHat, FileText, HelpCircle } from 'lucide-react'
 import { usePath } from '../lib/router'
-import { CONTRACT_ADDRESS, CHAIN_ID, CHAIN_NAME, EXPLORER_BASE } from '../lib/contract'
+import { CONTRACT_ADDRESS, CHAIN_ID, CHAIN_NAME, explorerAddr } from '../lib/contract'
+import { ACTIVE_NETWORK, hasContract } from '../lib/networks'
 
 const NAV = [
   { path: '/',         label: 'Home',     icon: ShieldCheck },
@@ -40,14 +41,18 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* Footer */}
       <footer className="px-4 py-3 text-center space-y-1"
         style={{ borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.5)' }}>
-        <p className="mono text-xs break-all" style={{ color: 'var(--subtle)' }}>
-          <a href={`${EXPLORER_BASE}/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer"
-            className="underline" style={{ color: 'var(--accent-hover)' }}>
-            {CONTRACT_ADDRESS}
-          </a>
-        </p>
+        {hasContract ? (
+          <p className="mono text-xs break-all" style={{ color: 'var(--subtle)' }}>
+            <a href={explorerAddr(CONTRACT_ADDRESS)} target="_blank" rel="noreferrer"
+              className="underline" style={{ color: 'var(--accent-hover)' }}>
+              {CONTRACT_ADDRESS}
+            </a>
+          </p>
+        ) : (
+          <p className="text-xs" style={{ color: 'var(--subtle)' }}>Not deployed on this network</p>
+        )}
         <p className="text-xs" style={{ color: 'var(--subtle)' }}>
-          {CHAIN_NAME} · chain {CHAIN_ID} · testnet only
+          {CHAIN_NAME} · chain {CHAIN_ID}{ACTIVE_NETWORK.isTestnet ? ' · testnet only' : ''}
         </p>
       </footer>
 

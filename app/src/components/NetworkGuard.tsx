@@ -1,5 +1,6 @@
 import { useAccount, useSwitchChain } from 'wagmi'
 import { CHAIN_ID, CHAIN_NAME, CHAIN_RPC, EXPLORER_BASE } from '../lib/contract'
+import { ACTIVE_NETWORK, hasContract } from '../lib/networks'
 
 interface Props {
   /** When true, also renders children on the wrong chain (banner + content).
@@ -35,7 +36,7 @@ export default function NetworkGuard({ children }: Props) {
                 chainId: `0x${CHAIN_ID.toString(16)}`,
                 chainName: CHAIN_NAME,
                 rpcUrls: [CHAIN_RPC],
-                nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+                nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: ACTIVE_NETWORK.nativeDecimals },
                 blockExplorerUrls: [EXPLORER_BASE],
               }],
             })
@@ -47,6 +48,19 @@ export default function NetworkGuard({ children }: Props) {
 
   return (
     <>
+      {!hasContract && (
+        <div className="rounded-2xl p-4 flex items-start gap-3 mb-4"
+          style={{ background: 'rgba(186,43,76,0.06)', border: '1px solid var(--danger)' }}>
+          <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+            style={{ background: 'var(--danger)', color: '#fff' }}>!</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: 'var(--danger)' }}>Not deployed on this network</p>
+            <p className="mt-0.5 text-xs" style={{ color: 'var(--ink-2)' }}>
+              ShiftProof has no contract on {CHAIN_NAME} (chain {CHAIN_ID}). All write actions are disabled.
+            </p>
+          </div>
+        </div>
+      )}
       {isWrongChain && (
         <div className="rounded-2xl p-4 flex items-start gap-3 mb-4"
           style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)' }}>

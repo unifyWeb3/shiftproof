@@ -1,42 +1,42 @@
 /**
- * Contract facts — single source of truth from deployments.json + compiled artifact.
- * Do NOT duplicate addresses or chain IDs elsewhere.
+ * Contract facts — derived entirely from ACTIVE_NETWORK in networks.ts.
+ * Do NOT hardcode addresses, chain IDs, or explorer URLs here.
  */
-import deployments from '../../deployments.json'
 import artifact from '../../contracts/out/ShiftProof.sol/ShiftProof.json'
+import { ACTIVE_NETWORK, explorerTx as _explorerTx, explorerAddr as _explorerAddr } from './networks'
 
 export const ABI = artifact.abi
 
-export const CHAIN_ID         = deployments.ShiftProof.arcTestnet.chainId  // 5042002
-export const CONTRACT_ADDRESS = deployments.ShiftProof.arcTestnet.address as `0x${string}`
-export const USDC_ADDRESS     = deployments.ShiftProof.arcTestnet.usdc as `0x${string}`
-export const DEPLOYMENT_BLOCK = BigInt(deployments.ShiftProof.arcTestnet.deploymentBlock)
-export const DEPLOYMENT_TX    = deployments.ShiftProof.arcTestnet.txHash
-export const EXPLORER_BASE    = 'https://explorer.testnet.arc.io'
-export const CHAIN_NAME       = 'Arc Testnet'
-export const CHAIN_RPC        = 'https://rpc.testnet.arc.io'
+// Re-export from the active network so consumers need only one import.
+export const CHAIN_ID         = ACTIVE_NETWORK.chainId
+export const CHAIN_NAME       = ACTIVE_NETWORK.label
+export const CHAIN_RPC        = ACTIVE_NETWORK.rpcUrl
+export const EXPLORER_BASE    = ACTIVE_NETWORK.explorerUrl
+export const USDC_ADDRESS     = ACTIVE_NETWORK.usdcAddress
+export const DEPLOYMENT_BLOCK = ACTIVE_NETWORK.deploymentBlock
+export const DEPLOYMENT_TX    = ACTIVE_NETWORK.deploymentTx ?? ''
 
-export const explorerTx   = (hash: string) => `${EXPLORER_BASE}/tx/${hash}`
-export const explorerAddr = (addr: string) => `${EXPLORER_BASE}/address/${addr}`
+// CONTRACT_ADDRESS is only valid when isConfigured; callers must check hasContract first.
+export const CONTRACT_ADDRESS = (ACTIVE_NETWORK.contractAddress ?? '0x0000000000000000000000000000000000000000')
+
+export const explorerTx   = _explorerTx
+export const explorerAddr = _explorerAddr
 
 // ─── Shift tuple — exactly mirrors getShift() output ─────────────────────────
-// Fields: employer, worker, createdAt, startedAt, endedAt, maxSeconds,
-//         attestedSeconds, hourlyRate, escrow, owed, status
 export interface ShiftTuple {
   employer:        `0x${string}`
   worker:          `0x${string}`
-  createdAt:       bigint   // uint64
-  startedAt:       bigint   // uint64
-  endedAt:         bigint   // uint64
-  maxSeconds:      number   // uint32
-  attestedSeconds: number   // uint32
-  hourlyRate:      bigint   // uint256 (6-decimal USDC)
-  escrow:          bigint   // uint256 (6-decimal USDC)
-  owed:            bigint   // uint256 (6-decimal USDC)
-  status:          number   // uint8
+  createdAt:       bigint
+  startedAt:       bigint
+  endedAt:         bigint
+  maxSeconds:      number
+  attestedSeconds: number
+  hourlyRate:      bigint
+  escrow:          bigint
+  owed:            bigint
+  status:          number
 }
 
-// Convenience: shift ID + tuple together
 export interface ShiftWithId extends ShiftTuple {
   id: number
 }

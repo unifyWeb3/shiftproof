@@ -10,6 +10,7 @@ import {
   type ShiftTuple, explorerAddr, explorerTx,
 } from '../lib/contract'
 import { fmtAddr, fmtUsdc, fmtSeconds, fmtDate, fmtDateUtc } from '../lib/format'
+import { ACTIVE_NETWORK, hasContract } from '../lib/networks'
 import {
   addCreatedShift, addAssignedShift,
   getShiftTxRecord, type ShiftTxRecord,
@@ -35,7 +36,7 @@ export default function ShiftReceipt({ shiftId }: Props) {
     address: CONTRACT_ADDRESS, abi: ABI, functionName: 'getShift',
     args: [BigInt(shiftId)],
     chainId: CHAIN_ID,
-    query: { refetchInterval: 10000 },
+    query: { enabled: hasContract, refetchInterval: 10000 },
   })
 
   const shift = data as ShiftTuple | undefined
@@ -48,6 +49,20 @@ export default function ShiftReceipt({ shiftId }: Props) {
   }, [shift, address, shiftId])
 
   const txRec: ShiftTxRecord = getShiftTxRecord(shiftId)
+
+  if (!hasContract) return (
+    <div className="space-y-4">
+      <button onClick={() => window.history.back()} className="flex items-center gap-1 text-sm" style={{ color: 'var(--muted)' }}>
+        <ArrowLeft className="size-4" /> Back
+      </button>
+      <div className="rounded-2xl p-5 text-center" style={glass}>
+        <p className="font-semibold" style={{ color: 'var(--danger)' }}>Not deployed on this network</p>
+        <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
+          ShiftProof has no contract on {ACTIVE_NETWORK.label}, so shift #{shiftId} cannot be read here.
+        </p>
+      </div>
+    </div>
+  )
 
   if (isLoading) return (
     <div className="flex flex-col items-center justify-center gap-3 py-20">
@@ -165,7 +180,7 @@ export default function ShiftReceipt({ shiftId }: Props) {
             No tx hashes in this browser's record. Full history is available on the explorer.
           </p>
         )}
-        <a href={`https://explorer.testnet.arc.io/address/${CONTRACT_ADDRESS}`}
+        <a href={explorerAddr(CONTRACT_ADDRESS)}
           target="_blank" rel="noreferrer"
           className="text-xs flex items-center gap-0.5" style={{ color: 'var(--accent-hover)' }}>
           Search all txs on explorer<ExternalLink className="size-2.5" />
@@ -185,12 +200,12 @@ export default function ShiftReceipt({ shiftId }: Props) {
       <div className="rounded-2xl px-4 py-3 space-y-1.5" style={glass}>
         <p className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>Verify onchain</p>
         <div className="flex flex-wrap gap-3">
-          <a href={`https://explorer.testnet.arc.io/address/${CONTRACT_ADDRESS}`}
+          <a href={explorerAddr(CONTRACT_ADDRESS)}
             target="_blank" rel="noreferrer"
             className="text-xs flex items-center gap-0.5" style={{ color: 'var(--accent-hover)' }}>
             Contract<ExternalLink className="size-2.5" />
           </a>
-          <a href={`https://explorer.testnet.arc.io/address/${USDC_ADDRESS}`}
+          <a href={explorerAddr(USDC_ADDRESS)}
             target="_blank" rel="noreferrer"
             className="text-xs flex items-center gap-0.5" style={{ color: 'var(--accent-hover)' }}>
             USDC token<ExternalLink className="size-2.5" />

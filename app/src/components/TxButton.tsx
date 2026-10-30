@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { usePublicClient, useWalletClient, useAccount } from 'wagmi'
 import { Loader2, X } from 'lucide-react'
 import { CHAIN_ID, CONTRACT_ADDRESS, CHAIN_NAME } from '../lib/contract'
+import { hasContract } from '../lib/networks'
 import { decodeContractError, fmtUsdc, fmtAddr } from '../lib/format'
 
 export interface TxArgs {
@@ -28,6 +29,8 @@ interface Props {
   onSuccess?: (hash: `0x${string}`) => void
   onError?: (msg: string) => void
   disabled?: boolean
+  /** Visible reason shown below the button when it is disabled. Keeps the action visible but inactive. */
+  disabledReason?: string
   variant?: 'primary' | 'danger'
 }
 
@@ -35,7 +38,7 @@ type Phase = 'idle' | 'confirm' | 'simulating' | 'signing' | 'confirming'
 
 export default function TxButton({
   txArgs, label, loadingLabel, detail, amount, shiftId,
-  onSuccess, onError, disabled, variant = 'primary',
+  onSuccess, onError, disabled, disabledReason, variant = 'primary',
 }: Props) {
   const { isConnected, chainId } = useAccount()
   const publicClient = usePublicClient({ chainId: CHAIN_ID })
@@ -45,10 +48,11 @@ export default function TxButton({
 
   const isWrongChain = isConnected && chainId !== CHAIN_ID
   const busy = phase !== 'idle' && phase !== 'confirm'
+  const notDeployed = !hasContract
 
   const accentColor = variant === 'danger' ? 'var(--danger)' : 'var(--accent)'
 
-  const isDisabled = disabled || busy || !isConnected || isWrongChain || !txArgs
+  const isDisabled = notDeployed || disabled || busy || !isConnected || isWrongChain || !txArgs
 
   const handleOpen = () => {
     setErrMsg(null)
@@ -95,6 +99,7 @@ export default function TxButton({
   }
 
   const statusLabel = () => {
+    if (notDeployed) return 'Not deployed on this network'
     if (!isConnected) return 'Connect wallet to continue'
     if (isWrongChain) return `Wrong network — switch to ${CHAIN_NAME}`
     if (phase === 'simulating') return 'Checking transaction...'
@@ -147,6 +152,11 @@ export default function TxButton({
 
       {errMsg && (
         <p className="mt-2 text-xs text-center" style={{ color: 'var(--danger)' }}>{errMsg}</p>
+      )}
+      {!errMsg && isDisabled && (notDeployed || disabledReason) && (
+        <p className="mt-1.5 text-xs text-center" style={{ color: 'var(--muted)' }}>
+          {notDeployed ? 'ShiftProof is not deployed on this network.' : disabledReason}
+        </p>
       )}
     </div>
   )

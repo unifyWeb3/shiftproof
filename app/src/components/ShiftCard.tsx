@@ -1,7 +1,7 @@
 import { ExternalLink, Copy, Check } from 'lucide-react'
 import { useState } from 'react'
 import { fmtAddr, fmtUsdc, fmtSeconds, fmtDate } from '../lib/format'
-import { explorerAddr, CONTRACT_ADDRESS, CHAIN_ID, USDC_ADDRESS, type ShiftTuple } from '../lib/contract'
+import { explorerAddr, explorerTx, CONTRACT_ADDRESS, CHAIN_ID, USDC_ADDRESS, type ShiftTuple } from '../lib/contract'
 import { shiftShareUrl } from '../lib/share'
 import StatusBadge from './StatusBadge'
 import { usePath } from '../lib/router'
@@ -90,7 +90,7 @@ export default function ShiftCard({ id, shift, txHash }: ShiftCardProps) {
       {txHash && (
         <div className="px-5 pb-3 flex items-center justify-between">
           <span className="text-xs" style={{ color: 'var(--muted)' }}>Latest tx</span>
-          <a href={`https://explorer.testnet.arc.io/tx/${txHash}`} target="_blank" rel="noreferrer"
+          <a href={explorerTx(txHash)} target="_blank" rel="noreferrer"
             className="mono text-xs flex items-center gap-0.5" style={{ color: 'var(--accent-hover)' }}>
             {fmtAddr(txHash)}<ExternalLink className="size-2.5" />
           </a>
@@ -98,12 +98,12 @@ export default function ShiftCard({ id, shift, txHash }: ShiftCardProps) {
       )}
 
       <div className="px-5 pb-4">
-        <a href={`https://explorer.testnet.arc.io/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer"
+        <a href={explorerAddr(CONTRACT_ADDRESS)} target="_blank" rel="noreferrer"
           className="text-xs" style={{ color: 'var(--subtle)' }}>
           Contract · chain {CHAIN_ID}
         </a>
         {' · '}
-        <a href={`https://explorer.testnet.arc.io/address/${USDC_ADDRESS}`} target="_blank" rel="noreferrer"
+        <a href={explorerAddr(USDC_ADDRESS)} target="_blank" rel="noreferrer"
           className="text-xs" style={{ color: 'var(--subtle)' }}>
           USDC
         </a>

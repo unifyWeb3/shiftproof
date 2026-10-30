@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { ShieldCheck, Briefcase, HardHat } from 'lucide-react'
-import { useReadContract } from 'wagmi'
-import { ABI, CONTRACT_ADDRESS, CHAIN_ID, explorerAddr } from '../lib/contract'
-import { fmtUsdc } from '../lib/format'
+import { useReadContract, useAccount } from 'wagmi'
+import { ABI, CONTRACT_ADDRESS, CHAIN_ID, CHAIN_NAME, explorerAddr } from '../lib/contract'
+import { ACTIVE_NETWORK, hasContract } from '../lib/networks'
+import { fmtUsdc, fmtAddr } from '../lib/format'
 import { usePath } from '../lib/router'
 
 const glass = {
@@ -15,17 +16,18 @@ const glass = {
 export default function Home() {
   const [, navigate] = usePath()
   const [shiftIdInput, setShiftIdInput] = useState('')
+  const { address, isConnected } = useAccount()
 
   const { data: nextId } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI, functionName: 'nextShiftId',
     chainId: CHAIN_ID,
-    query: { refetchInterval: 12000 },
+    query: { enabled: hasContract, refetchInterval: 12000 },
   }) as { data: bigint | undefined }
 
   const { data: totalEscrow } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI, functionName: 'totalEscrow',
     chainId: CHAIN_ID,
-    query: { refetchInterval: 12000 },
+    query: { enabled: hasContract, refetchInterval: 12000 },
   }) as { data: bigint | undefined }
 
   const shiftsCreated = nextId !== undefined ? Number(nextId) - 1 : undefined
@@ -51,7 +53,7 @@ export default function Home() {
         </div>
         <h1 className="display text-3xl font-bold" style={{ color: 'var(--ink)' }}>ShiftProof</h1>
         <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>
-          On-chain shift escrow and attestation on Arc Testnet.
+          On-chain shift escrow and attestation on {ACTIVE_NETWORK.label}.
           <br />USDC held until work is verified and claimed.
         </p>
 
@@ -71,10 +73,16 @@ export default function Home() {
           </div>
         </div>
 
-        <a href={explorerAddr(CONTRACT_ADDRESS)} target="_blank" rel="noreferrer"
-          className="mt-3 inline-block text-xs" style={{ color: 'var(--subtle)' }}>
-          Arc Testnet · chain {CHAIN_ID}
-        </a>
+        {hasContract ? (
+          <a href={explorerAddr(CONTRACT_ADDRESS)} target="_blank" rel="noreferrer"
+            className="mt-3 inline-block text-xs" style={{ color: 'var(--subtle)' }}>
+            {CHAIN_NAME} · chain {CHAIN_ID}{ACTIVE_NETWORK.isTestnet ? ' · testnet' : ''}
+          </a>
+        ) : (
+          <p className="mt-3 text-xs" style={{ color: 'var(--subtle)' }}>
+            {CHAIN_NAME} · chain {CHAIN_ID} · not deployed on this network
+          </p>
+        )}
       </section>
 
       {/* Quick actions */}
@@ -94,6 +102,31 @@ export default function Home() {
           </button>
         ))}
       </div>
+
+      {/* Wallet guide */}
+      {isConnected && address ? (
+        <section className="rounded-3xl p-4 space-y-2" style={glass}>
+          <p className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>Connected wallet</p>
+          <div className="flex items-center justify-between gap-2">
+            <span className="mono text-xs" style={{ color: 'var(--muted)' }}>{fmtAddr(address)}</span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+              style={{ background: ACTIVE_NETWORK.isTestnet ? 'rgba(18,45,69,0.08)' : 'rgba(26,128,71,0.1)', color: 'var(--ink)' }}>
+              {ACTIVE_NETWORK.label}
+            </span>
+          </div>
+          <div className="pt-1 space-y-1 text-xs" style={{ color: 'var(--muted)' }}>
+            <p><span className="font-semibold" style={{ color: 'var(--ink)' }}>As employer:</span> go to Employer to create and manage shifts.</p>
+            <p><span className="font-semibold" style={{ color: 'var(--ink)' }}>As worker:</span> go to Worker and enter the shift ID your employer gave you.</p>
+            <p><span className="font-semibold" style={{ color: 'var(--ink)' }}>To verify:</span> enter any shift ID in the lookup below.</p>
+          </div>
+        </section>
+      ) : (
+        <section className="rounded-2xl px-4 py-3 text-center" style={glass}>
+          <p className="text-sm" style={{ color: 'var(--muted)' }}>
+            Connect wallet to create or manage shifts. Read-only lookup is always available below.
+          </p>
+        </section>
+      )}
 
       {/* Verify a shift */}
       <section className="rounded-3xl p-5 space-y-3" style={glass}>
