@@ -1,281 +1,173 @@
 # ShiftProof
 
-> **Disclosed demonstration — not a live payroll service.**  
-> ShiftProof is a per-shift USDC escrow demo built with [Arc Studio](https://studio.arc.io). Both the employer and worker wallets are controlled by the builder. No real worker pilot, letter of intent, legal review, or production payroll use is claimed. The contract pays on **employer attestation**, not trustless verification of work. There are no worker fees. Do not use this with real workers until a jurisdiction/legal review and a written pilot agreement exist.
+Pre-funded USDC settlement for hourly shifts on Arc.
 
-**Status:** Phase 2b. The contract is frozen and tested on Arc Testnet, and a mainnet deployment is live at `0x2A88dDe461280F5a3Ad959fd6997388409e766a9`. The mainnet deployment was compiled in Remix with optimizer disabled, so its runtime bytecode differs from the optimized 5,990-byte Studio artifact; Sourcify reports an exact source match for creation and runtime. The public repo and Vercel production deployment are live. Mainnet USDC has real value, the contract is not audited, and the demo is not a production payroll service.
+[
 
-**Labels:** `VERIFIED` = directly observed in the linked evidence; `UNVERIFIED` = prepared or inferred but not exercised on mainnet; `UNRESOLVED` = a human decision, external dependency, or open contradiction.
+![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 
-The full claim-to-evidence register is in the [mainnet package](arc-pipeline/04-mainnet-package.md). Unresolved reproducibility gaps are listed there too.
+](LICENSE) [
 
-## Proof at a glance
+![network: Arc mainnet](https://img.shields.io/badge/network-Arc%20mainnet-1f2937.svg)
 
-| Asset | Value | Status |
-|---|---|---|
-| Production app (mainnet) | [shiftproof-phi.vercel.app](https://shiftproof-phi.vercel.app) | `VERIFIED` Vercel production deployment |
-| Public repo | [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) | `VERIFIED` |
-| Demo video | Not recorded | `UNRESOLVED` |
-| Arc Studio project | [studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | `VERIFIED` URL; public access `UNRESOLVED` |
-| Builder profile | [x.com/oxunify](https://x.com/oxunify) | `VERIFIED` URL provided; ownership `UNVERIFIED` |
-| Arc mainnet contract | [`0x2A88dDe461280F5a3Ad959fd6997388409e766a9`](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | `VERIFIED` |
-| Arc mainnet deploy tx | [`0x9b56fa4…36d98`](https://explorer.arc.io/tx/0x9b56fa49c2c78b78ac24c7f4f154d4825194c6939b05f4e8086a8d5e10336d98) | `VERIFIED` |
-| Source verification | Sourcify exact match (creation + runtime) | `VERIFIED` on Sourcify; explorer pending |
-| Mainnet demo txs | Not run (planned A/B/C demo shifts) | `UNVERIFIED` |
-| Arc testnet contract | [`0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6`](https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6) | `VERIFIED` |
-| Arc testnet deploy tx | [`0x89b616d…dcfd52`](https://explorer.testnet.arc.io/tx/0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52) | `VERIFIED` |
-| Contract tests | 76/76 Studio run; six invariants at 256 runs × 128,000 calls | `VERIFIED` |
-| Live-USDC E2E on testnet | Not run with two live wallets | `UNVERIFIED` |
-| Live two-wallet USDC E2E on mainnet | One full shift lifecycle on-chain (shift #1, 0.15 USDC, 2026-10-31) | `VERIFIED` — [E25](arc-pipeline/03-evidence/mainnet-live-e2e.md) |
-| Mainnet demo shifts A/B/C | Replaced by live shift #1; A/B/C plan not executed | `UNRESOLVED` |
+](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) [
 
-## What it is
+![status: unaudited prototype](https://img.shields.io/badge/status-unaudited%20prototype-orange.svg)
 
-ShiftProof is a narrow primitive for hourly/1099-style work:
+](#limitations)
 
-1. An employer pre-funds a shift in USDC.
-2. The worker optionally clocks in and out.
-3. The employer attests the number of seconds to pay.
-4. The worker claims the earned USDC.
-5. Any unused escrow can be refunded to the employer with a separate `refundUnused` call.
-6. The employer can cancel before the worker clocks in.
+ShiftProof is a smart contract for hourly shift settlement. An employer pre-funds USDC for a shift, the worker clocks in and out, the employer attests the hours, and the worker claims the attested amount. The contract enforces who can act and when. It does not prove that work was done: the employer's attestation is the trust anchor.
 
-The contract is one immutable, keyless deployment. It has no owner, admin, pause, proxy, upgrade, fee, sweep, or native-value path. `VERIFIED` in the [contract source](app/contracts/ShiftProof.sol) and [Phase 1 report](arc-pipeline/03-phase1-report.md).
+[live app](https://shiftproof-phi.vercel.app) | [contract on explorer](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | [source on Sourcify](https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | [arc studio project](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | [mainnet proof](#mainnet-proof)
 
-| Fact | Value | Status |
-|---|---|---|
-| Source | `app/contracts/ShiftProof.sol:ShiftProof` | `VERIFIED` |
-| Source Keccak-256 | `0x5d5e2edb0e2cea4601933f12b2a59bd4e0424d07375323404e0df5c2813ae3ca` | `VERIFIED` |
-| Frozen Studio compiler | `solc 0.8.28+commit.7893614a` | `VERIFIED` |
-| Frozen Studio EVM target | `cancun` | `VERIFIED` |
-| Frozen Studio optimizer | enabled, 200 runs | `VERIFIED` |
-| Remix mainnet compiler | `solc 0.8.28+commit.7893614a` | `VERIFIED` — Sourcify metadata |
-| Remix mainnet EVM target | `cancun` | `VERIFIED` — Sourcify metadata |
-| Remix mainnet optimizer | **disabled** | `VERIFIED` — Sourcify metadata |
-| `viaIR` | false / unset | `VERIFIED` |
-| Metadata bytecode hash | `ipfs` | `VERIFIED` |
-| OpenZeppelin | `5.6.1` | `VERIFIED` |
-| USDC (ERC-20 interface) | `0x3600000000000000000000000000000000000000`, 6 decimals | `VERIFIED` |
-| Native gas | USDC, 18 decimals; same underlying balance | `VERIFIED` |
-| Frozen optimized runtime | 5,990 bytes, `0x843ef44664f6eb7bbbe95c213d6fd60b88d912b3810d087981ab69a94b90b1e5` | `VERIFIED` reconstruction |
-| Deployed mainnet runtime | 10,864 bytes, `0x83cd0dd06d49f7493eda6dea3f2a2042f04d5ba724bcb22a7f41200dce41bb4a` | `VERIFIED` on mainnet; optimizer disabled; Sourcify exact source match |
-| Testnet runtime | 5,990 bytes, same hash as frozen optimized artifact | `VERIFIED` |
+Built for the Arc Microgrants hackathon (Built with Arc Studio).
 
-## What it is not
+## at a glance
 
-- **Not live payroll or earned-wage access.** It is a disclosed demonstration. No real employer/worker pilot is claimed.
-- **Not trustless work verification.** The employer's attestation is the trust anchor. The contract cannot prove the worker actually worked.
-- **Not audited.** No security audit has been performed. Do not claim one.
-- **Not a dispute system.** There is no arbitration, escrow agent, or onchain dispute path. Disagreements must be resolved off-chain before attestation.
-- **Not a fee product.** There is no protocol fee, admin cut, or token. Workers pay no fee; gas is paid by the transacting wallet.
-- **Not a production payroll service.** The mainnet deployment is a disclosed demonstration. Real USDC is at risk; do not use it with real workers without legal review and a written pilot agreement.
-- **Not source-verified on the block explorer.** Sourcify reports an exact source match for creation and runtime; explorer verification may still be pending. Do not call it explorer-verified until the explorer shows the source/ABI.
-
-## How it works
-
-| Status | Who can act / what |
+| item | value |
 |---|---|
-| `Funded` | Worker: `clockIn`; Employer: `cancel`, `attest` |
-| `Active` | Worker: `clockOut`; Employer: `attest` |
-| `AwaitingAttestation` | Employer: `attest` |
-| `Attested` | Worker: `claim`; anyone: `refundUnused` (always pays employer) |
-| `Claimed` | Anyone: `refundUnused` if `escrow > owed` |
-| `Settled` | Terminal |
-| `Cancelled` | Terminal |
+| network | Arc mainnet, chain ID 5042 |
+| contract | `0x2A88dDe461280F5a3Ad959fd6997388409e766a9` |
+| deployment | block 28,736,878, tx [`0x9b56fa49…36d98`](https://explorer.arc.io/tx/0x9b56fa49c2c78b78ac24c7f4f154d4825194c6939b05f4e8086a8d5e10336d98) |
+| token | USDC, `0x3600000000000000000000000000000000000000`, 6 decimals |
+| source verification | exact match on Sourcify (creation and runtime) |
+| compiler | solc 0.8.28, Cancun, optimizer off (see [verify it yourself](#verify-it-yourself)) |
+| status | working prototype, unaudited |
+| license | MIT |
 
-`cancel` is only allowed while `Funded` (before clock-in). `refundUnused` is permissionless but always pays the employer. `claim` does **not** automatically refund unused escrow; that is a separate call.
+## the problem
 
-Escrow is computed as `hourlyRate × maxSeconds / 3600`, in 6-decimal USDC. Caps: `MAX_HOURLY_RATE=1,000 USDC`, `MAX_SHIFT_SECONDS=24h`, `MAX_ESCROW=10,000 USDC`. `VERIFIED` in the contract and [Help page](app/src/pages/Help.tsx).
+Short hourly jobs have a timing gap. The worker does the work first and is paid later, and the amount depends on hours that both sides must agree on. When payment is late or the hours are disputed, the worker has little visibility and few options.
 
-## Evidence
+ShiftProof addresses one part of that gap. The money is committed before the shift starts, and release follows rules that both parties can read and check on a public chain. The intended scope is short engagements between parties who already agree on a rate and a maximum duration, such as temporary event staffing or one-off contractor shifts. ShiftProof is not a payroll system. It does not handle tax, worker classification or local labor rules.
 
-| ID | Evidence |
-|---|---|
-| E02 | [Phase 1 report](arc-pipeline/03-phase1-report.md) |
-| E03 | [Contract test log](arc-pipeline/03-evidence/s2-forge-test.log) |
-| E04 | [Testnet on-chain verification](arc-pipeline/03-evidence/s3-onchain-verification.json) |
-| E05 | [Testnet deployment record](arc-pipeline/03-evidence/deployments-current.json) |
-| E06 | [Frozen artifact metadata](app/contracts/out/ShiftProof.sol/ShiftProof.json) |
-| E07 | [Foundry config](app/foundry.toml) |
-| E08 | [Package/dependency pins](app/package.json) |
-| E09 | [Arc docs: contract addresses](https://docs.arc.io/arc/references/contract-addresses.md) |
-| E10 | [Arc docs: connect to Arc](https://docs.arc.io/arc/references/connect-to-arc.md) |
-| E11 | [Arc docs: gas and fees](https://docs.arc.io/arc/references/gas-and-fees.md) |
-| E12 | [Arc docs: EVM differences](https://docs.arc.io/arc/references/evm-differences.md) |
-| E13 | [Arc docs: deploy on Arc](https://docs.arc.io/arc/tutorials/deploy-on-arc.md) |
-| E14 | [Arc docs: install Arc Foundry](https://docs.arc.io/arc/tutorials/install-arc-foundry.md) |
-| E15 | [Explorer verification attempt](arc-pipeline/03-evidence/explorer-verification-attempt.json) |
-| E16 | [Frontend check/build log](arc-pipeline/03-evidence/s6-check-build.log) |
-| E17 | [Fork E2E evidence](arc-pipeline/03-evidence/TESTNET-E2E-fork.md) |
-| E18 | [Contract source](app/contracts/ShiftProof.sol) |
-| E19 | [Arc Studio project](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) |
-| E20 | [Builder profile](https://x.com/oxunify) |
-| E23 | [Bytecode analysis](arc-pipeline/04-evidence/bytecode-analysis.json) |
-| E24 | [Mainnet package](arc-pipeline/04-mainnet-package.md) |
-| E25 | [Mainnet live two-wallet E2E](arc-pipeline/03-evidence/mainnet-live-e2e.md) |
-| E26 | [Mainnet live E2E raw RPC data](arc-pipeline/03-evidence/mainnet-live-e2e.json) |
+## how it works
 
-## Test and deployment evidence
+1. The employer creates a shift: worker address, hourly rate in USDC and maximum duration. The employer approves USDC and the contract locks the maximum amount.
+2. The worker clocks in and clocks out. The contract records both times.
+3. The employer attests the number of seconds to pay for, up to the maximum duration. This sets the amount owed.
+4. The worker claims the attested amount.
+5. Any unused amount is returned to the employer.
 
-- **Studio test run:** 76/76 tests passed, 0 failed, 0 skipped; six invariants at 256 runs × 128,000 calls, 0 reverts. `VERIFIED` [E03].
-- **Testnet deployment:** Arc Testnet `5042002`, contract `0x39845ad…41a6`, tx `0x89b616d…fd52`, block `69263663`, receipt status `1`. `VERIFIED` [E04, E05].
-- **Testnet reads:** 5,990 bytes; `usdc()=0x3600…0000`; `nextShiftId=1`; `totalEscrow=0`; caps as expected. `VERIFIED` [E04].
-- **Bytecode match:** testnet runtime equals the frozen artifact after patching the five immutable USDC bytes at offsets 395, 1,474, 1,932, 2,394, 4,141; only those five bytes differ from the zeroed artifact. `VERIFIED` [E04, E23].
-- **Fork E2E:** 3/3 flows passed with anvil + MockUSDC (happy path, cancel, zero attestation). These are **not** live testnet tx hashes. `VERIFIED` for fork logic; `UNVERIFIED` for live USDC [E17].
-- **Frontend:** `bun run check` passed (0 lint warnings/errors; `tsc --noEmit` exit 0); `bunx vite build` succeeded. `VERIFIED` [E16].
-- **Live-USDC testnet E2E with two real wallets:** not run. `UNVERIFIED` [E02 §3].
-- **Source verification:** explorer API returned bytecode only, no source/ABI; `verified:false`. `VERIFIED` for the failed attempt; do not call it verified [E15].
-- **Mainnet:** contract `0x2A88dDe461280F5a3Ad959fd6997388409e766a9`, deploy tx `0x9b56fa4…36d98`, block `28736878`; runtime `10,864` bytes, `0x83cd0…bb4a`; Sourcify creation/runtime `exact_match`; at deployment time `usdc()`, `nextShiftId=1`, `totalEscrow=0` passed; `nextShiftId()` is now `2` with shift #1 settled. `VERIFIED` [mainnet-deploy.md](arc-pipeline/03-evidence/mainnet-deploy.md).
-- **Mainnet live two-wallet E2E:** one full lifecycle on-chain (approve → create → clock-in → clock-out → attest → claim → Settled) for shift #1, 0.15 USDC, 2026-10-31; wallet balances reconcile exactly against per-tx gas fees. `VERIFIED` [E25].
-
-## Mainnet proof (live two-wallet E2E)
-
-Everything in this table is read-only RPC evidence from `https://rpc.mainnet.arc.io` (scan `2026-10-31 ~12:11` UTC at block `28,815,019`), documented with links in [E25](arc-pipeline/03-evidence/mainnet-live-e2e.md). No transaction was sent for the check.
-
-| Step | On-chain fact (tx, block UTC) | Status |
-|---|---|---|
-| Approve | employer `0x3211…88d3` approved ShiftProof for exactly `150000` raw (0.15 USDC) — [`0x1d58499b…9e719`](https://explorer.arc.io/tx/0x1d58499b9f9c88d59b826fd37c59a1ca63fe39f99361b1fb252606439309e719), `28,746,059` (02:28:48) | `VERIFIED` |
-| Create shift | `ShiftCreated(1)`: employer/worker, `0.15 USDC/hr`, `3600s`; USDC `150000` moved employer→contract — [`0xd0fee562…3c528`](https://explorer.arc.io/tx/0xd0fee562f840cc303a02f11a2fe771b3a8f4537650d32f07b7cb5e7dd073c528), `28,746,088` (02:29:03) | `VERIFIED` |
-| Clock in | `ClockedIn(1, 02:29:41 UTC)` by worker — [`0x3938a944…18c73`](https://explorer.arc.io/tx/0x3938a9440e6c1afb6a3588b1fdf5ca9c89338d37f98ab34c967a8ddd33518c73), `28,746,163` | `VERIFIED` |
-| Clock out | `ClockedOut(1, 02:29:55 UTC)` by worker — [`0x940951f1…50063`](https://explorer.arc.io/tx/0x940951f1e35dab64e13972ac6f980c9a478f064b2a55aedc230b7fc6efe50063), `28,746,191` | `VERIFIED` |
-| Attest | employer attested `3600`s, owed `150000` — [`0xd4f47eb0…31cf`](https://explorer.arc.io/tx/0xd4f47eb026827032ff39323e49a5eb6996c259e324f15d992bd3931c51cb31cf), `28,746,278` (02:30:39) | `VERIFIED` |
-| Claim | `Claimed(1, 150000)`; USDC `150000` moved contract→worker — [`0x3e8011cf…055e6`](https://explorer.arc.io/tx/0x3e8011cfdaf40ca6510ba8f5cc3f060abdfffb68b4e3645eb886351476f055e6), `28,746,333` (02:31:08) | `VERIFIED` |
-| Settle | `Settled(1)` emitted by the claim tx; `getShift(1)` status `6` (`Settled`), escrow `0`, owed `0` — same tx | `VERIFIED` |
-| Residual refund (`refundUnused`) | no `Refunded` event in the swept range — MISSING (not required: claim paid the full owed) | `MISSING` |
-| Cancel | no `Cancelled` event in the swept range — MISSING | `MISSING` |
-| Multi-shift | `nextShiftId()=2`, `totalEscrow=0`: shift #1 is the only shift created | `VERIFIED` |
-
-Balances (block-anchored `balanceOf`, 6-decimal): employer `0.402131` → `0.245339`; worker `0.05` → `0.197221`; contract `0` → `0.15` → `0`. Every delta closes exactly against `0.15` USDC escrow flows plus per-tx native-gas fees at `20.001` gwei [E25 §4].
-
-Not established by this E2E: independent proof of work — **employer attestation is the trust anchor**; both wallets are builder-controlled by disclosure; no audit has been performed; the optimizer-difference disclosure continues to apply (`Deployment provenance`).
-
-## Deployment provenance
-
-**Studio-generated artifacts.** `app/contracts/out/ShiftProof.sol/ShiftProof.json`, `app/foundry.toml`, the source under `app/contracts/`, the test suite, and the Arc Testnet deployment came from the Studio/Foundry build. That artifact uses solc `0.8.28+commit.7893614a`, Cancun, optimizer **enabled with 200 runs**, `viaIR` false, and metadata bytecode hash `ipfs`. Its runtime is 5,990 bytes, keccak `0x843ef44664f6eb7bbbe95c213d6fd60b88d912b3810d087981ab69a94b90b1e5`.
-
-**Manual mainnet changes.** The mainnet entry in `app/src/lib/networks.ts` is a manual, data-only edit recording contract `0x2A88dDe461280F5a3Ad959fd6997388409e766a9`, block `28736878`, tx `0x9b56fa49c2c78b78ac24c7f4f154d4825194c6939b05f4e8086a8d5e10336d98`, and `isConfigured: true`. The Remix deployment is a manual deployment of the unchanged `app/contracts/ShiftProof.sol` source. No contract source was changed for mainnet.
-
-**Remix deployment settings.** solc `0.8.28+commit.7893614a`, EVM `cancun`, optimizer **disabled** (metadata records `runs: 200` but `enabled: false`), metadata bytecode hash `ipfs`, constructor USDC `0x3600000000000000000000000000000000000000`. Sourcify reports `creationMatch: exact_match` and `runtimeMatch: exact_match` for [`0x2A88…66a9`](https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9). The deployed runtime is 10,864 bytes, keccak `0x83cd0dd06d49f7493eda6dea3f2a2042f04d5ba724bcb22a7f41200dce41bb4a`.
-
-**Production deployment.** The mainnet frontend is live at [`https://shiftproof-phi.vercel.app`](https://shiftproof-phi.vercel.app), Vercel deployment `dpl_9k2xfS7u1dVCknNj6VVCFZomU6VS`, target `production`, with no deployment protection. It was built with `VITE_NETWORK=mainnet`. All six routes (`/`, `/employer`, `/worker`, `/proof`, `/shift/1`, `/help`) returned HTTP 200 in fresh logged-out browser contexts, with no Vercel authentication, no console errors, no testnet links or text, chain `5042`, and contract `0x2A88…66a9`. `/shift/1` renders a real settled mainnet shift: `0.15 USDC/hr`, `1h`, created `2026-10-31 02:29:03 UTC`.
-
-**Manual E2E status text updates.** After the read-only live mainnet E2E check [E25], the E2E status statements in this README, `/proof` (`app/src/pages/Proof.tsx`), and `app/AGENTS.md` were updated manually to match that evidence. These are **text-only edits**: no contract source, ABI, test, or app logic was changed. The "no audit", "attestation is the trust anchor", and optimizer-difference disclosures are intentionally unchanged.
-
-**What the verifier says.** The read-only verifier's public reads pass, but its frozen-artifact comparison fails: 10,864 != 5,990 bytes, runtime hash `0x83cd…bb4a` != `0x843e…b1e5`, and 5,748 byte positions differ. The deployed contract does **not** match the frozen optimized bytecode. Do not claim that it does. The difference is explained by the optimizer setting, not by a different source.
-
-**Source hash comparison.** The frozen package records source Keccak-256 `0x5d5e2edb0e2cea4601933f12b2a59bd4e0424d07375323404e0df5c2813ae3ca` for the 13,039-byte `app/contracts/ShiftProof.sol`; the local file hashes to that value. The Sourcify-deployed source is 13,038 bytes and hashes to `0x73e4d9bf3e261cb6aa50e901d4c8fe5e86e5a9b049c949d25cc0f7c170cc0c84` because it lacks the local file's single trailing newline. The Solidity is otherwise identical. Sourcify's exact match establishes that the deployed source compiles to the deployed bytecode with optimizer disabled; it does not establish that the deployed source is byte-identical to the frozen source or that the deployed bytecode matches the optimized artifact.
-
-**Local contract tests.** `forge` and `solc` were not installed in this environment, so the Foundry suite was not run locally for this deployment. The recorded Studio run remains 76/76. No tools were installed to force the check.
-
-## Security and trust model
-
-- **No privileged path:** no owner, admin, pause, proxy, upgrade, fee, sweep, rescue, or native-value function. The deployer has no post-deploy privilege.
-- **USDC handling:** `SafeERC20`; exact approvals in the UI; state-before-transfer for claim/refund/cancel; `ReentrancyGuard` on the USDC-transfer paths (`createShift`, `claim`, `refundUnused`, `cancel`); `clockIn`/`clockOut`/`attest` have no external calls; no arbitrary token or recipient.
-- **One inbound transfer exception:** `createShift` does the inbound `safeTransferFrom` before the state write, documented in the source. This is not an arbitrary external call.
-- **Trust anchor:** employer attestation, not proof of work. No dispute path.
-- **Privacy:** only public addresses, shift IDs, amounts, timestamps, and tx hashes onchain. No names, emails, locations, tax IDs, or documents. localStorage is a cache, not a source of truth.
-- **Arc-specific risks:** USDC blocklist reverts consume gas; native USDC is 18 decimals while the ERC-20 interface is 6; the 20 Gwei floor can drop underpriced transactions.
-- **No audit:** do not claim one.
-
-## Repository layout
-
-```text
-app/
-  contracts/ShiftProof.sol          # frozen contract
-  contracts/test/                   # Foundry tests
-  contracts/script/Deploy.s.sol     # deploy preflight + deployment
-  contracts/out/                    # frozen artifact
-  src/                              # Vite + React + wagmi app
-  deployments.json                  # testnet record; mainnet lives in src/lib/networks.ts
-arc-pipeline/
-  03-phase1-report.md
-  03-evidence/
-  04-mainnet-package.md             # mainnet package
-  04-evidence/bytecode-analysis.json
-  scripts/verify-mainnet-readonly.sh
+```mermaid
+stateDiagram-v2
+    [*] --> Funded: createShift
+    Funded --> Active: clockIn
+    Funded --> [*]: cancel (funds returned to employer)
+    Active --> AwaitingAttestation: clockOut
+    AwaitingAttestation --> Attested: attest
+    Attested --> Claimed: claim
+    Claimed --> Settled: refundUnused (or nothing left to refund)
 ```
 
-## Build and test
+| role | can do |
+|---|---|
+| employer | create and fund a shift, attest hours, cancel before clock-in, refund unused funds |
+| worker | clock in, clock out, claim the attested amount |
+| any other address | read shift state |
+
+Refunds always go to the employer address, whoever calls them. The exact rules are in [`app/contracts/ShiftProof.sol`](app/contracts/ShiftProof.sol).
+
+## mainnet proof
+
+One complete shift was run on Arc mainnet through the live app, using two wallets controlled by the builder. Every row can be opened on the explorer.
+
+| step | sender | transaction | result |
+|---|---|---|---|
+| deploy contract | deployer | [`0x9b56fa49…36d98`](https://explorer.arc.io/tx/0x9b56fa49c2c78b78ac24c7f4f154d4825194c6939b05f4e8086a8d5e10336d98) | block 28,736,878 |
+| approve USDC | employer | [`0x1d58499b…9e719`](https://explorer.arc.io/tx/0x1d58499b9f9c88d59b826fd37c59a1ca63fe39f99361b1fb252606439309e719) | exact allowance of 0.15 USDC |
+| createShift | employer | [`0xd0fee562…3c528`](https://explorer.arc.io/tx/0xd0fee562f840cc303a02f11a2fe771b3a8f4537650d32f07b7cb5e7dd073c528) | 0.15 USDC locked, rate 0.15 USDC/hr, 1 hour maximum (2026-10-31 02:29 UTC) |
+| clockIn | worker | [`0x3938a944…18c73`](https://explorer.arc.io/tx/0x3938a9440e6c1afb6a3588b1fdf5ca9c89338d37f98ab34c967a8ddd33518c73) | shift active |
+| clockOut | worker | [`0x940951f1…50063`](https://explorer.arc.io/tx/0x940951f1e35dab64e13972ac6f980c9a478f064b2a55aedc230b7fc6efe50063) | awaiting attestation |
+| attest | employer | [`0xd4f47eb0…31cf`](https://explorer.arc.io/tx/0xd4f47eb026827032ff39323e49a5eb6996c259e324f15d992bd3931c51cb31cf) | 3,600 seconds attested, 0.15 USDC owed |
+| claim | worker | [`0x3e8011cf…055e6`](https://explorer.arc.io/tx/0x3e8011cfdaf40ca6510ba8f5cc3f060abdfffb68b4e3645eb886351476f055e6) | 0.15 USDC paid to the worker (2026-10-31 02:31 UTC) |
+
+Final state: `nextShiftId` is 2 and `totalEscrow` is 0. Because the full amount was attested and claimed, nothing was left to refund. Refund and cancel are covered by the test suite and were not run on mainnet. The raw data is in [`arc-pipeline/03-evidence`](arc-pipeline/03-evidence).
+
+## built with arc studio
+
+| built in arc studio | done outside arc studio |
+|---|---|
+| the Solidity contract | mainnet deployment through Remix (Studio deploys to testnet only) |
+| the Foundry test suite | the mainnet entry in `app/src/lib/networks.ts` |
+| the React app: employer, worker, shift lookup, proof and help pages | text edits to this README and the proof page |
+| the testnet deployment at [`0x39845ad2…41a6`](https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6) on Arc Testnet (chain 5042002) | GitHub repository and Vercel hosting |
+| a follow-up refactor: shared router fix and a single network configuration file | read-only collection of the on-chain evidence |
+
+The recorded Studio run passed 76 of 76 tests, including six invariant properties (256 runs, 128,000 calls, no reverts). That run used the Studio compiler output with the optimizer on. It did not test the deployed bytecode.
+
+## architecture
+
+ShiftProof is one contract with no admin key, no backend and no indexer. The web app is static. It reads state over a public RPC and sends transactions through the user's wallet.
+
+```mermaid
+flowchart LR
+    E[employer wallet] --> C[ShiftProof contract]
+    W[worker wallet] --> C
+    C <--> U[USDC token]
+    A[static web app] -->|reads over RPC| C
+```
+
+The app has five pages: home with a read-only shift lookup, employer, worker, proof and help. The proof page reads the chain live and shows the chain ID, latest block, contract code size, runtime hash, USDC address, `nextShiftId` and `totalEscrow`.
+
+## verify it yourself
+
+1. Open the [contract on the explorer](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) and check the six transactions listed above.
+2. Open the Sourcify match and confirm the source is the one in this repository.
+3. Call `usdc()`, `nextShiftId()` and `totalEscrow()` through the explorer or a public RPC (`https://rpc.mainnet.arc.io`).
+4. Open the [live proof page](https://shiftproof-phi.vercel.app/proof).
+
+**compiler difference.** The mainnet deployment was compiled in Remix with the optimizer off. The Studio artifact in this repository was compiled with the optimizer on (200 runs). The source is the same. The read-only verifier script in `arc-pipeline/scripts` compares the deployment with the Studio artifact, so it reports a mismatch by design.
+
+| field | Studio artifact | mainnet deployment |
+|---|---|---|
+| compiler | solc 0.8.28 | solc 0.8.28 |
+| EVM target | Cancun | Cancun |
+| optimizer | on, 200 runs | off |
+| runtime size | 5,990 bytes | 10,864 bytes |
+| runtime keccak-256 | `0x843ef44664f6eb7bbbe95c213d6fd60b88d912b3810d087981ab69a94b90b1e5` | `0x83cd0dd06d49f7493eda6dea3f2a2042f04d5ba724bcb22a7f41200dce41bb4a` |
+
+## limitations
+
+- The employer's attestation is the trust anchor. The contract records that a worker clocked in and out. It does not show that work was done.
+- There is no dispute path. If the employer attests too little, the worker has no on-chain remedy.
+- The contract has not been audited and is immutable.
+- The mainnet demo used two wallets controlled by the builder. No real employer or worker has used it.
+- No legal or jurisdiction review has been done.
+- The Studio tests were not re-run against the deployed optimizer-off bytecode.
+- Refund and cancel were not exercised on mainnet.
+
+## roadmap
+
+Not built yet.
+
+- a pilot with a real employer and workers
+- a worker dispute path
+- an independent audit
+- a multi-shift interface
+
+## run it locally
 
 ```bash
 cd app
-bun install
-
-# The current snapshot does not vendor forge-std:
-arc-forge install foundry-rs/forge-std
-git -C lib/forge-std rev-parse HEAD
-
-arc-forge build --force
-arc-forge test --network arc
-bun run check
-bunx vite build
+npm install
+npm run dev
 ```
 
-`VERIFIED` for the Studio 76/76 run and the Phase 1 frontend check/build. `UNVERIFIED` for a local Arc Foundry rebuild in this environment: local Arc Foundry, `lib/forge-std`, and `node_modules` were absent. There is no `bun.lock` in the current snapshot; add one before claiming a reproducible frontend build. `UNRESOLVED`.
-
-## Deploy and verify
-
-Mainnet execution is **human-only** and per-transaction approved. The full commands, approval cards, expected bytecode hashes, and read-only verification script are in [E24]. Do not put a private key in the repo, a shell command, or a chat. The agent never holds a mainnet key.
+The app defaults to Arc Testnet. For a mainnet build:
 
 ```bash
-# Read-only verification after deploy; no signing, no broadcast:
-./arc-pipeline/scripts/verify-mainnet-readonly.sh "$SHIFTPROOF" 1 0
-
-# After shifts A/B/C:
-./arc-pipeline/scripts/verify-mainnet-readonly.sh "$SHIFTPROOF" 4 0
-```
-
-The verifier checks chain `5042`, `usdc()`, `nextShiftId`, `totalEscrow`, USDC decimals, runtime size/hash, and the exact frozen-artifact comparison with the five immutable USDC bytes patched. On the live deployment, chain ID and public reads pass; the size/hash/exact comparison fails because the Remix deployment used optimizer disabled. The verifier exits `1`. Do not claim the optimized bytecode matches. `VERIFIED` [mainnet-deploy.md](arc-pipeline/03-evidence/mainnet-deploy.md).
-
-**Source verification:** Sourcify reports `creationMatch: exact_match` and `runtimeMatch: exact_match` for [`0x2A88…66a9`](https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9). Explorer source verification may still be pending. `VERIFIED` on Sourcify; explorer `UNRESOLVED`.
-
-## Demo (40 USDC cap)
-
-The demo uses three shifts, with both wallets builder-controlled:
-
-| Shift | Escrow | Attest | Paid | Refunded | Final |
-|---|---:|---:|---:|---:|---|
-| A: 4h × 5 USDC | 20 USDC | 4h | 20 USDC | 0 | `Settled` |
-| B: 2h × 5 USDC | 10 USDC | 1h | 5 USDC | 5 USDC | `Settled` |
-| C: 1h × 5 USDC | 5 USDC | none | 0 | 5 USDC | `Cancelled` |
-
-Gross escrow 35 USDC; gas cap 0.25 USDC; total committed 35.25 USDC, under the 40 USDC cap. Optional 1 USDC smoke test raises it to 36.25 USDC. `VERIFIED` arithmetic; `UNVERIFIED` execution. The 40 USDC cap is authorized; **no mainnet transaction is authorized without per-card approval** [E24 §5.1].
-
-## Limitations and open items
-
-- No real worker pilot, LOI, or legal review. `UNRESOLVED (waived, not satisfied)`.
-- Employer attestation is centralized trust. `VERIFIED`.
-- No dispute mechanism. `VERIFIED`.
-- No live-USDC testnet E2E with two real wallets. `UNVERIFIED`.
-- Sourcify source verification is an exact match; block-explorer verification may still be pending. `VERIFIED` on Sourcify; explorer `UNRESOLVED`.
-- Mainnet deployment is live but compiled with optimizer disabled; its runtime bytecode differs from the frozen optimized artifact. `VERIFIED`.
-- Public repo and Vercel production deployment are live; video is still a placeholder. `VERIFIED` repo/deployment; `UNRESOLVED` video.
-- Local Foundry tests were not run for this deployment because `forge` and `solc` were unavailable. `UNVERIFIED` local rerun; the recorded Studio run remains 76/76.
-- Sourcify's deployed source is byte-identical to the frozen source except for one trailing newline, so its source hash differs. `VERIFIED`.
-- The app is network-aware: `VITE_NETWORK=testnet` uses the testnet deployment; `VITE_NETWORK=mainnet` uses the mainnet deployment. One full live mainnet E2E lifecycle (shift #1) is verified on-chain [E25]; shift #1 is the only shift created (`nextShiftId` is `2`). `VERIFIED` configuration and one-shift E2E; multi-shift mainnet behavior `UNVERIFIED`.
-- No `bun.lock`; forge-std commit not pinned; Arc Foundry version not recorded in the artifact. `UNRESOLVED` reproducibility gaps.
-- No audit. Do not imply one. `VERIFIED`.
-
-## Network-aware configuration
-
-The app selects its network at build time with `VITE_NETWORK`:
-
-```bash
-VITE_NETWORK=testnet npx vite build   # default
 VITE_NETWORK=mainnet npx vite build
 ```
 
-All chain facts live in `app/src/lib/networks.ts`. `app/src/lib/contract.ts` re-exports the active network, and UI copy branches on `ACTIVE_NETWORK.isTestnet`. The testnet entry is unchanged; the mainnet entry is a manual, data-only edit recorded in `app/README.md`.
+## project layout
 
-| Network | Chain ID | Contract | Status |
-|---|---|---|---|
-| Arc Testnet | `5042002` | `0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6` | Live; testnet funds only |
-| Arc Mainnet | `5042` | `0x2A88dDe461280F5a3Ad959fd6997388409e766a9` | Live preview; source-verified on Sourcify; optimizer disabled; not audited |
+- `app/contracts/ShiftProof.sol`: the contract
+- `app/src/lib/networks.ts`: network and deployment configuration
+- `app/deployments.json`: testnet deployment record
+- `arc-pipeline/03-evidence`: on-chain evidence
+- `arc-pipeline/scripts`: read-only verifier script
 
-Missing or malformed mainnet deployment data fails closed: `hasContract` becomes `false`, and contract reads and writes stay disabled.
+## license and author
 
-Remaining testnet-specific documentation: `app/TESTNET-E2E.md`, `app/TESTNET-E2E-LIVE.md`, and the testnet deployment table in `app/AGENTS.md`. `app/src/onchain-facts.ts` contains facts for both networks.
-
-## License
-
-MIT. See [LICENSE](LICENSE).
+MIT. Built by unify, [@oxunify](https://x.com/oxunify).
