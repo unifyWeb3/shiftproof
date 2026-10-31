@@ -18,6 +18,8 @@ const glass = {
   WebkitBackdropFilter: 'blur(16px)',
 } as const
 
+const SOURCIFY_URL = `https://repo.sourcify.dev/${ACTIVE_NETWORK.chainId}/${CONTRACT_ADDRESS}`
+
 function InfoRow({
   label, value, link, mono, loading,
 }: { label: string; value: string; link?: string; mono?: boolean; loading?: boolean }) {
@@ -197,7 +199,9 @@ export default function Proof() {
             />
             {live.runtimeHash && (
               <p className="mt-1 text-xs" style={{ color: 'var(--subtle)' }}>
-                The frozen artifact hash is published in the repo; live hash differs only by the five immutable USDC address bytes baked in at deploy time. This is not source verification.
+                {ACTIVE_NETWORK.isTestnet
+                  ? 'The frozen artifact hash is published in the repo; live hash differs only by the five immutable USDC address bytes baked in at deploy time. This is not source verification.'
+                  : 'The mainnet deployment was compiled with optimizer disabled, so its runtime bytecode differs from the optimized 5,990-byte frozen artifact. Sourcify reports an exact source match for this address. This is not a security audit.'}
               </p>
             )}
           </>
@@ -249,23 +253,41 @@ export default function Proof() {
               ? `Tx ${fmtAddr(ACTIVE_NETWORK.deploymentTx)} at block ${ACTIVE_NETWORK.deploymentBlock?.toLocaleString()}`
               : notDeployed ? 'No contract on this network.' : undefined}
         />
-        <StatusItem label="Source verified on explorer: NO" ok={false}
-          note="Source verification via the explorer API was unavailable at deploy time. ABI is embedded from the compiled artifact." />
+        {ACTIVE_NETWORK.isTestnet ? (
+          <StatusItem label="Source verified on explorer: NO" ok={false}
+            note="Source verification via the explorer API was unavailable at deploy time. ABI is embedded from the compiled artifact." />
+        ) : (
+          <StatusItem label="Source verified on Sourcify: exact match" ok
+            note={`Creation and runtime both report exact_match. ${SOURCIFY_URL}`} />
+        )}
         <StatusItem
           label="Studio S2: 76/76, six invariants at 256 runs × 128,000 calls, 0 reverts"
           ok
           note="Log: arc-pipeline/03-evidence/s2-forge-test.log."
         />
-        <StatusItem label="Runtime matches frozen artifact except five immutable USDC bytes" ok={!notDeployed && !!live.runtimeHash}
-          note={notDeployed
-            ? 'Not verifiable: no contract is deployed on this network.'
-            : live.error
-              ? `Not verified: ${live.error}`
-              : live.runtimeHash
-                ? 'keccak256 of live runtime bytecode shown above. Artifact hash published in repo. Delta is exactly the five USDC address bytes baked in as an immutable at deploy time.'
-                : 'Waiting for live runtime bytecode…'} />
+        {ACTIVE_NETWORK.isTestnet ? (
+          <StatusItem label="Runtime matches frozen artifact except five immutable USDC bytes" ok={!notDeployed && !!live.runtimeHash}
+            note={notDeployed
+              ? 'Not verifiable: no contract is deployed on this network.'
+              : live.error
+                ? `Not verified: ${live.error}`
+                : live.runtimeHash
+                  ? 'keccak256 of live runtime bytecode shown above. Artifact hash published in repo. Delta is exactly the five USDC address bytes baked in as an immutable at deploy time.'
+                  : 'Waiting for live runtime bytecode…'} />
+        ) : (
+          <StatusItem label="Deployed source matches frozen source (optimizer disabled)" ok={!notDeployed && !!live.runtimeHash}
+            note={notDeployed
+              ? 'Not verifiable: no contract is deployed on this network.'
+              : live.error
+                ? `Not verified: ${live.error}`
+                : live.runtimeHash
+                  ? 'Sourcify reports creationMatch=runtimeMatch=exact_match. The local frozen artifact was built with optimizer enabled (200 runs); this deployment used optimizer disabled, so the runtime hash differs even though the source is identical.'
+                  : 'Waiting for live runtime bytecode…'} />
+        )}
         <StatusItem label={`Live USDC E2E on ${ACTIVE_NETWORK.label} with two real wallets`} ok={false}
-          note="Not verified. Fork tests used MockUSDC; no live two-wallet E2E has been run. See TESTNET-E2E.md." />
+          note={ACTIVE_NETWORK.isTestnet
+            ? 'Not verified. Fork tests used MockUSDC; no live two-wallet E2E has been run. See TESTNET-E2E.md.'
+            : 'Not verified on Arc mainnet. The deployment is source-verified, but no live two-wallet E2E has been run here.'} />
       </section>
 
       {/* Links */}
@@ -276,6 +298,13 @@ export default function Proof() {
           value="github.com/unifyWeb3/shiftproof"
           link="https://github.com/unifyWeb3/shiftproof"
         />
+        {!ACTIVE_NETWORK.isTestnet && (
+          <InfoRow
+            label="Source verification (Sourcify)"
+            value="exact match"
+            link={SOURCIFY_URL}
+          />
+        )}
         <InfoRow
           label={`Hosted preview${ACTIVE_NETWORK.isTestnet ? ' (testnet-only)' : ''}`}
           value={window.location.origin}
@@ -308,8 +337,10 @@ export default function Proof() {
         <ul className="text-xs space-y-1.5 list-disc pl-4" style={{ color: '#92400e' }}>
           <li>{ACTIVE_NETWORK.isTestnet
             ? `${ACTIVE_NETWORK.label} only. All tokens have no real-world value.`
-            : 'No ShiftProof contract is deployed on this network. No mainnet deployment is claimed.'}</li>
-          <li>Source verification is unavailable via the explorer API.</li>
+            : 'Arc mainnet. Real USDC is at risk. The contract is source-verified on Sourcify but was compiled with optimizer disabled; it differs from the optimized local artifact.'}</li>
+          <li>{ACTIVE_NETWORK.isTestnet
+            ? 'Source verification is unavailable via the explorer API.'
+            : 'Explorer source verification may still be pending; Sourcify reports an exact match.'}</li>
           <li>Live-USDC E2E with two real wallets has not been run. Fork tests used MockUSDC.</li>
           <li>Fork test hashes are NOT real transaction hashes and are not listed here.</li>
           <li>Employer attestation is the trust anchor — there is no trustless verification of hours worked.</li>

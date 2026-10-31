@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { usePath, matchPath } from './lib/router'
+import { ACTIVE_NETWORK } from './lib/networks'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import Employer from './pages/Employer'
@@ -9,6 +11,10 @@ import Help from './pages/Help'
 
 export default function App() {
   const [path] = usePath()
+
+  useEffect(() => {
+    document.title = `ShiftProof — ${ACTIVE_NETWORK.label}`
+  }, [])
 
   const shiftMatch = matchPath('/shift/:id', path)
   const shiftId = shiftMatch ? parseInt(shiftMatch.id, 10) : null

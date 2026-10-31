@@ -11,6 +11,8 @@ const glass = {
   WebkitBackdropFilter: 'blur(16px)',
 } as const
 
+const SOURCIFY_URL = `https://repo.sourcify.dev/${ACTIVE_NETWORK.chainId}/${CONTRACT_ADDRESS}`
+
 const FAQS = [
   {
     q: 'What wallet should I use?',
@@ -24,7 +26,7 @@ const FAQS = [
     q: ACTIVE_NETWORK.isTestnet ? 'How do I get testnet USDC?' : 'How do I get USDC?',
     a: ACTIVE_NETWORK.isTestnet
       ? `Use the "Get test USDC" button in the Arc Studio sidebar. It will drip ${ACTIVE_NETWORK.label} USDC to your connected wallet for free. Testnet USDC has no real-world value.`
-      : 'Acquire USDC on Arc and keep enough for gas. This build has no ShiftProof contract deployed on Arc mainnet, so no escrow transaction can be made here.',
+      : 'Acquire USDC on Arc and keep enough for gas. This build targets Arc mainnet and the ShiftProof contract is deployed here. Mainnet USDC has real value; the demo is not audited, so use only small amounts you can afford to lose.',
   },
   {
     q: 'Why does creating a shift need two transactions?',
@@ -62,7 +64,7 @@ const FAQS = [
     q: 'Is this on mainnet?',
     a: ACTIVE_NETWORK.isTestnet
       ? `No. ShiftProof V1 is deployed on ${ACTIVE_NETWORK.label} only. Testnet funds have no real-world value. A mainnet deployment would require a separate deploy and is not part of this demo.`
-      : 'This build targets Arc mainnet, but ShiftProof V1 is not deployed there. The demo contract is on testnet only; no mainnet funds are at risk in this build.',
+      : `Yes. This build targets Arc mainnet and the ShiftProof contract is deployed at ${CONTRACT_ADDRESS}. Mainnet USDC has real value. The contract is source-verified on Sourcify, but it was compiled with optimizer disabled and has not been audited. Do not use it with real workers.`,
   },
   {
     q: 'Why does localStorage matter?',
@@ -127,7 +129,12 @@ export default function Help() {
         </div>
         {hasContract && (
           <p className="text-xs" style={{ color: 'var(--subtle)' }}>
-            Source is not verified on the explorer. The ABI is embedded from the compiled artifact.
+            {ACTIVE_NETWORK.isTestnet
+              ? 'Source is not verified on the explorer. The ABI is embedded from the compiled artifact.'
+              : <>Source is verified on Sourcify (exact match).{' '}
+                  <a href={SOURCIFY_URL} target="_blank" rel="noreferrer"
+                    className="underline" style={{ color: 'var(--accent-hover)' }}>View verification</a>.
+                </>}
           </p>
         )}
       </section>
@@ -174,13 +181,15 @@ export default function Help() {
         <ul className="text-xs space-y-1.5 list-disc pl-4" style={{ color: 'var(--ink-2)' }}>
           <li>{ACTIVE_NETWORK.isTestnet
             ? 'Testnet only. All tokens have no real-world value.'
-            : 'No contract is deployed on this network in this build. Do not send funds.'}</li>
+            : 'Arc mainnet. Real USDC is at risk. The contract is source-verified but not audited; use only small amounts you can afford to lose.'}</li>
           <li>Attestation is employer trust — there is no trustless verification of hours worked.</li>
           <li>No dispute mechanism. Disagreements must be resolved off-chain.</li>
           <li>No fees beyond Arc network gas. No admin, no pause, no upgrade.</li>
           <li>No PII is stored onchain or in this app. Do not enter names, emails, or personal data.</li>
           <li>LocalStorage is a cache only. Always use the shift ID to recover records.</li>
-          <li>Source verification is unavailable. Verify the ABI against the artifact yourself.</li>
+          <li>{ACTIVE_NETWORK.isTestnet
+            ? 'Source verification is unavailable. Verify the ABI against the artifact yourself.'
+            : 'Source is verified on Sourcify. Explorer verification may still be pending.'}</li>
         </ul>
       </section>
 

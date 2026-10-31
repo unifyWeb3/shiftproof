@@ -51,11 +51,11 @@ export const NETWORKS: Record<NetworkKey, NetworkConfig> = {
     usdcAddress: '0x3600000000000000000000000000000000000000',
     usdcDecimals: 6,
     nativeDecimals: 18,
-    contractAddress: null,
-    deploymentBlock: null,
-    deploymentTx: null,
+    contractAddress: '0x2A88dDe461280F5a3Ad959fd6997388409e766a9',
+    deploymentBlock: 28736878n,
+    deploymentTx: '0x9b56fa49c2c78b78ac24c7f4f154d4825194c6939b05f4e8086a8d5e10336d98',
     isTestnet: false,
-    isConfigured: false,
+    isConfigured: true,
   },
 }
 
@@ -70,8 +70,25 @@ if (rawKey !== 'testnet' && rawKey !== 'mainnet') {
 export const ACTIVE_NETWORK_KEY: NetworkKey = rawKey
 export const ACTIVE_NETWORK: NetworkConfig = NETWORKS[ACTIVE_NETWORK_KEY]
 
-/** True when the active network has a deployed contract. */
-export const hasContract: boolean = ACTIVE_NETWORK.isConfigured && ACTIVE_NETWORK.contractAddress !== null
+/**
+ * A configured network is only usable when every deployment fact is present
+ * and well-formed. Missing or malformed mainnet data fails closed: callers see
+ * hasContract=false and all contract reads/writes stay disabled.
+ */
+const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/
+const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/
+
+function isValidConfiguredNetwork(network: NetworkConfig): boolean {
+  if (!network.isConfigured) return false
+  if (!network.contractAddress || !ADDRESS_RE.test(network.contractAddress)) return false
+  if (network.deploymentBlock === null || network.deploymentBlock <= 0n) return false
+  if (!network.deploymentTx || !TX_HASH_RE.test(network.deploymentTx)) return false
+  if (!ADDRESS_RE.test(network.usdcAddress)) return false
+  return true
+}
+
+/** True only when the active network has a complete, well-formed deployment. */
+export const hasContract: boolean = isValidConfiguredNetwork(ACTIVE_NETWORK)
 
 // ─── Explorer helpers ─────────────────────────────────────────────────────────
 

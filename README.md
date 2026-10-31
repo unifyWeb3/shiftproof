@@ -3,7 +3,7 @@
 > **Disclosed demonstration — not a live payroll service.**  
 > ShiftProof is a per-shift USDC escrow demo built with [Arc Studio](https://studio.arc.io). Both the employer and worker wallets are controlled by the builder. No real worker pilot, letter of intent, legal review, or production payroll use is claimed. The contract pays on **employer attestation**, not trustless verification of work. There are no worker fees. Do not use this with real workers until a jurisdiction/legal review and a written pilot agreement exist.
 
-**Status:** Phase 2b. The contract is frozen and tested on Arc Testnet. **No Arc mainnet deployment, transaction, or key access has been made.** C4 is closed and a 40 USDC cap is authorized; Remix + Rabby (Path B) is primary; every mainnet transaction still needs separate approval. The public repo and [Vercel preview](https://shiftproof-gfq9cfdvd-oxunify.vercel.app) are live. The preview is **testnet-only** until mainnet configuration is approved.
+**Status:** Phase 2b. The contract is frozen and tested on Arc Testnet, and a mainnet deployment is live at `0x2A88dDe461280F5a3Ad959fd6997388409e766a9`. The mainnet build used optimizer disabled, so its runtime bytecode differs from the optimized 5,990-byte artifact; Sourcify reports an exact source match. The public repo and Vercel preview are live. Mainnet USDC has real value, the contract is not audited, and the demo is not a production payroll service.
 
 **Labels:** `VERIFIED` = directly observed in the linked evidence; `UNVERIFIED` = prepared or inferred but not exercised on mainnet; `UNRESOLVED` = a human decision, external dependency, or open contradiction.
 
@@ -13,14 +13,14 @@ The full claim-to-evidence register is in the [mainnet package](arc-pipeline/04-
 
 | Asset | Value | Status |
 |---|---|---|
-| Hosted preview | [shiftproof-gfq9cfdvd-oxunify.vercel.app](https://shiftproof-gfq9cfdvd-oxunify.vercel.app) | `VERIFIED` deployment; testnet-only |
+| Hosted preview | [shiftproof-gfq9cfdvd-oxunify.vercel.app](https://shiftproof-gfq9cfdvd-oxunify.vercel.app) | `VERIFIED` deployment; mainnet-configured |
 | Public repo | [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) | `VERIFIED` |
 | Demo video | Not recorded | `UNRESOLVED` |
 | Arc Studio project | [studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | `VERIFIED` URL; public access `UNRESOLVED` |
 | Builder profile | [x.com/oxunify](https://x.com/oxunify) | `VERIFIED` URL provided; ownership `UNVERIFIED` |
-| Arc mainnet contract | Not deployed | `UNVERIFIED` |
-| Arc mainnet deploy tx | Not deployed | `UNVERIFIED` |
-| Source verification | Not verified on explorer | `UNRESOLVED` |
+| Arc mainnet contract | [`0x2A88dDe461280F5a3Ad959fd6997388409e766a9`](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | `VERIFIED` |
+| Arc mainnet deploy tx | [`0x9b56fa4…36d98`](https://explorer.arc.io/tx/0x9b56fa49c2c78b78ac24c7f4f154d4825194c6939b05f4e8086a8d5e10336d98) | `VERIFIED` |
+| Source verification | Sourcify exact match (creation + runtime) | `VERIFIED` on Sourcify; explorer pending |
 | Mainnet demo txs | Not run | `UNVERIFIED` |
 | Arc testnet contract | [`0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6`](https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6) | `VERIFIED` |
 | Arc testnet deploy tx | [`0x89b616d…dcfd52`](https://explorer.testnet.arc.io/tx/0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52) | `VERIFIED` |
@@ -53,8 +53,9 @@ The contract is one immutable, keyless deployment. It has no owner, admin, pause
 | OpenZeppelin | `5.6.1` | `VERIFIED` |
 | USDC (ERC-20 interface) | `0x3600000000000000000000000000000000000000`, 6 decimals | `VERIFIED` |
 | Native gas | USDC, 18 decimals; same underlying balance | `VERIFIED` |
-| Expected mainnet runtime | 5,990 bytes, `0x843ef44664f6eb7bbbe95c213d6fd60b88d912b3810d087981ab69a94b90b1e5` | `VERIFIED` reconstruction; `UNVERIFIED` on mainnet |
-| Testnet runtime | 5,990 bytes, same hash | `VERIFIED` |
+| Frozen optimized runtime | 5,990 bytes, `0x843ef44664f6eb7bbbe95c213d6fd60b88d912b3810d087981ab69a94b90b1e5` | `VERIFIED` reconstruction |
+| Deployed mainnet runtime | 10,864 bytes, `0x83cd0dd06d49f7493eda6dea3f2a2042f04d5ba724bcb22a7f41200dce41bb4a` | `VERIFIED` on mainnet; optimizer disabled; Sourcify exact source match |
+| Testnet runtime | 5,990 bytes, same hash as frozen optimized artifact | `VERIFIED` |
 
 ## What it is not
 
@@ -63,8 +64,8 @@ The contract is one immutable, keyless deployment. It has no owner, admin, pause
 - **Not audited.** No security audit has been performed. Do not claim one.
 - **Not a dispute system.** There is no arbitration, escrow agent, or onchain dispute path. Disagreements must be resolved off-chain before attestation.
 - **Not a fee product.** There is no protocol fee, admin cut, or token. Workers pay no fee; gas is paid by the transacting wallet.
-- **Not mainnet yet.** The testnet deployment is not mainnet proof.
-- **Not source-verified on the explorer.** Testnet verification returned bytecode only. Do not call it verified until the explorer shows the source/ABI.
+- **Not a production payroll service.** The mainnet deployment is a disclosed demonstration. Real USDC is at risk; do not use it with real workers without legal review and a written pilot agreement.
+- **Not source-verified on the block explorer.** Sourcify reports an exact source match for creation and runtime; explorer verification may still be pending. Do not call it explorer-verified until the explorer shows the source/ABI.
 
 ## How it works
 
@@ -118,7 +119,7 @@ Escrow is computed as `hourlyRate × maxSeconds / 3600`, in 6-decimal USDC. Caps
 - **Frontend:** `bun run check` passed (0 lint warnings/errors; `tsc --noEmit` exit 0); `bunx vite build` succeeded. `VERIFIED` [E16].
 - **Live-USDC testnet E2E with two real wallets:** not run. `UNVERIFIED` [E02 §3].
 - **Source verification:** explorer API returned bytecode only, no source/ABI; `verified:false`. `VERIFIED` for the failed attempt; do not call it verified [E15].
-- **Mainnet:** no deployment, transaction, key access, or spend. `VERIFIED` [E02 §8].
+- **Mainnet:** contract `0x2A88dDe461280F5a3Ad959fd6997388409e766a9`, deploy tx `0x9b56fa4…36d98`, block `28736878`; runtime `10,864` bytes, `0x83cd0…bb4a`; Sourcify creation/runtime `exact_match`; `usdc()`, `nextShiftId=1`, `totalEscrow=0` pass. `VERIFIED` [mainnet-deploy.md](arc-pipeline/03-evidence/mainnet-deploy.md).
 
 ## Security and trust model
 
@@ -200,33 +201,32 @@ Gross escrow 35 USDC; gas cap 0.25 USDC; total committed 35.25 USDC, under the 4
 - Employer attestation is centralized trust. `VERIFIED`.
 - No dispute mechanism. `VERIFIED`.
 - No live-USDC testnet E2E with two real wallets. `UNVERIFIED`.
-- No explorer source verification. `UNRESOLVED`.
-- No mainnet deployment. `VERIFIED`.
+- Sourcify source verification is an exact match; block-explorer verification may still be pending. `VERIFIED` on Sourcify; explorer `UNRESOLVED`.
+- Mainnet deployment is live but compiled with optimizer disabled; its runtime bytecode differs from the frozen optimized artifact. `VERIFIED`.
 - Public repo and Vercel preview are live; video is still a placeholder. `VERIFIED` repo/preview; `UNRESOLVED` video.
-- The app's runtime/UI is testnet-only until `deployments.json`, `contract.ts`, `config.ts`, `Proof.tsx`, `Help.tsx`, `Layout.tsx`, `Home.tsx`, `ShiftCard.tsx`, and `ShiftReceipt.tsx` are updated. `VERIFIED` current state; `UNVERIFIED` mainnet config.
+- The app is network-aware: `VITE_NETWORK=testnet` uses the testnet deployment; `VITE_NETWORK=mainnet` uses the mainnet deployment. Mainnet E2E has not been run. `VERIFIED` configuration; `UNVERIFIED` mainnet E2E.
 - No `bun.lock`; forge-std commit not pinned; Arc Foundry version not recorded in the artifact. `UNRESOLVED` reproducibility gaps.
 - No audit. Do not imply one. `VERIFIED`.
 
-## Testnet-only UI references
+## Network-aware configuration
 
-The preview is **testnet-only**. These files contain testnet facts or links and must be updated before any mainnet recording. `VERIFIED` current state; `UNVERIFIED` mainnet config.
+The app selects its network at build time with `VITE_NETWORK`:
 
-| File | Testnet-only reference |
-|---|---|
-| `app/deployments.json` | Only `ShiftProof.arcTestnet`; testnet explorer URL. |
-| `app/src/lib/contract.ts` | `CHAIN_ID = 5042002`; testnet RPC/explorer; testnet contract address. |
-| `app/src/config.ts` | `chains: [arcTestnet, mainnet]`; no Arc mainnet chain. |
-| `app/src/pages/Proof.tsx` | "Contract deployed to Arc Testnet"; testnet E2E status; Studio-preview app URL. |
-| `app/src/pages/Help.tsx` | Testnet RPC/explorer/faucet copy; "Is this on mainnet? No." |
-| `app/src/components/Layout.tsx` | Footer says "testnet only." |
-| `app/src/pages/Home.tsx` | Hero says "Arc Testnet"; "verified" copy should say "attested." |
-| `app/src/components/ShiftCard.tsx` | Hardcoded `https://explorer.testnet.arc.io` tx/address links. |
-| `app/src/pages/ShiftReceipt.tsx` | Hardcoded `https://explorer.testnet.arc.io` address links. |
-| `app/README.md` | Testnet deployment table and testnet connection instructions; build command is `bunx vite build`. |
-| `app/AGENTS.md` | Testnet deployment/explorer link. |
-| `app/TESTNET-E2E.md` | Arc Testnet fork/RPC/faucet instructions and links. |
-| `app/TESTNET-E2E-LIVE.md` | Live two-wallet testnet checklist; expected results and screenshot points. |
-| `app/src/onchain-facts.ts` | Contains **both** testnet and mainnet facts; generated file, not testnet-only. Verify current before use. |
+```bash
+VITE_NETWORK=testnet npm run build   # default
+VITE_NETWORK=mainnet npm run build
+```
+
+All chain facts live in `app/src/lib/networks.ts`. `app/src/lib/contract.ts` re-exports the active network, and UI copy branches on `ACTIVE_NETWORK.isTestnet`. The testnet entry is unchanged; the mainnet entry is a manual, data-only edit recorded in `app/README.md`.
+
+| Network | Chain ID | Contract | Status |
+|---|---|---|---|
+| Arc Testnet | `5042002` | `0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6` | Live; testnet funds only |
+| Arc Mainnet | `5042` | `0x2A88dDe461280F5a3Ad959fd6997388409e766a9` | Live preview; source-verified on Sourcify; optimizer disabled; not audited |
+
+Missing or malformed mainnet deployment data fails closed: `hasContract` becomes `false`, and contract reads and writes stay disabled.
+
+Remaining testnet-specific documentation: `app/TESTNET-E2E.md`, `app/TESTNET-E2E-LIVE.md`, and the testnet deployment table in `app/AGENTS.md`. `app/src/onchain-facts.ts` contains facts for both networks.
 
 ## License
 
