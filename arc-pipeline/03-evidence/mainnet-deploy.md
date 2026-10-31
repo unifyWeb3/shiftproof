@@ -326,7 +326,7 @@ The page contains no “testnet only,” “not deployed,” or “No ShiftProof
 
 The deployment was created with `vercel deploy --yes -b VITE_NETWORK=mainnet` from `app/`. It was not promoted to production.
 
-Commit and push are recorded in the final report for this session. No unrelated working-tree files were committed.
+The integration commit is `6308f1d` (`feat(app): configure Arc mainnet deployment`), pushed to `origin/main` as `befc391..6308f1d`. No unrelated working-tree files were committed.
 
 ---
 

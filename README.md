@@ -13,7 +13,7 @@ The full claim-to-evidence register is in the [mainnet package](arc-pipeline/04-
 
 | Asset | Value | Status |
 |---|---|---|
-| Hosted preview | [shiftproof-gfq9cfdvd-oxunify.vercel.app](https://shiftproof-gfq9cfdvd-oxunify.vercel.app) | `VERIFIED` deployment; mainnet-configured |
+| Hosted preview (mainnet) | [shiftproof-pbli3fxwu-oxunify.vercel.app](https://shiftproof-pbli3fxwu-oxunify.vercel.app) | `VERIFIED` preview deployment; not production |
 | Public repo | [github.com/unifyWeb3/shiftproof](https://github.com/unifyWeb3/shiftproof) | `VERIFIED` |
 | Demo video | Not recorded | `UNRESOLVED` |
 | Arc Studio project | [studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | `VERIFIED` URL; public access `UNRESOLVED` |
