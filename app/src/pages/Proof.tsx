@@ -284,10 +284,10 @@ export default function Proof() {
                   ? 'Sourcify reports creationMatch=runtimeMatch=exact_match. The local frozen artifact was built with optimizer enabled (200 runs); this deployment used optimizer disabled, so the runtime hash differs even though the source is identical.'
                   : 'Waiting for live runtime bytecode…'} />
         )}
-        <StatusItem label={`Live USDC E2E on ${ACTIVE_NETWORK.label} with two real wallets`} ok={false}
+        <StatusItem label={`Live USDC E2E on ${ACTIVE_NETWORK.label} with two real wallets`} ok={ACTIVE_NETWORK.isTestnet ? false : true}
           note={ACTIVE_NETWORK.isTestnet
             ? 'Not verified. Fork tests used MockUSDC; no live two-wallet E2E has been run. See TESTNET-E2E.md.'
-            : 'Not verified on Arc mainnet. The deployment is source-verified, but no live two-wallet E2E has been run here.'} />
+            : 'Verified on Arc mainnet on 2026-10-31: one full lifecycle (approve → create → clock-in → clock-out → attest → claim → settled) for shift #1, 0.15 USDC. Evidence: arc-pipeline/03-evidence/mainnet-live-e2e.md. Employer attestation remains the trust anchor; no audit.'} />
       </section>
 
       {/* Links */}
@@ -341,7 +341,9 @@ export default function Proof() {
           <li>{ACTIVE_NETWORK.isTestnet
             ? 'Source verification is unavailable via the explorer API.'
             : 'Explorer source verification may still be pending; Sourcify reports an exact match.'}</li>
-          <li>Live-USDC E2E with two real wallets has not been run. Fork tests used MockUSDC.</li>
+          <li>{ACTIVE_NETWORK.isTestnet
+            ? 'Live-USDC E2E with two real wallets has not been run on testnet. Fork tests used MockUSDC.'
+            : 'One full live mainnet E2E lifecycle is verified on-chain (shift #1, 0.15 USDC; see the README proof table). Employer attestation remains the trust anchor; not audited.'}</li>
           <li>Fork test hashes are NOT real transaction hashes and are not listed here.</li>
           <li>Employer attestation is the trust anchor — there is no trustless verification of hours worked.</li>
           <li>No dispute path. Disputes must be resolved off-chain before attestation.</li>

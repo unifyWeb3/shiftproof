@@ -42,6 +42,7 @@ Mainnet deployment notes:
 - Tx hash: `0x9b56fa49c2c78b78ac24c7f4f154d4825194c6939b05f4e8086a8d5e10336d98`, block `28736878`.
 - Remix settings: solc `0.8.28+commit.7893614a`, Cancun, optimizer **disabled**. The frozen Studio artifact used optimizer enabled with 200 runs and does **not** match the deployed runtime.
 - Sourcify: creation and runtime `exact_match` — https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9
+- Live two-wallet E2E verified read-only on-chain 2026-10-31 (`arc-pipeline/03-evidence/mainnet-live-e2e.md`): approve → create → clock-in → clock-out → attest → claim → Settled for shift #1, 0.15 USDC. Employer attestation remains the trust anchor; no audit.
 - Production app: https://shiftproof-phi.vercel.app (`VITE_NETWORK=mainnet`, Vercel target `production`).
 - No audit. Mainnet USDC has real value. Do not use with real workers.
 

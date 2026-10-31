@@ -21,12 +21,13 @@ The full claim-to-evidence register is in the [mainnet package](arc-pipeline/04-
 | Arc mainnet contract | [`0x2A88dDe461280F5a3Ad959fd6997388409e766a9`](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | `VERIFIED` |
 | Arc mainnet deploy tx | [`0x9b56fa4…36d98`](https://explorer.arc.io/tx/0x9b56fa49c2c78b78ac24c7f4f154d4825194c6939b05f4e8086a8d5e10336d98) | `VERIFIED` |
 | Source verification | Sourcify exact match (creation + runtime) | `VERIFIED` on Sourcify; explorer pending |
-| Mainnet demo txs | Not run | `UNVERIFIED` |
+| Mainnet demo txs | Not run (planned A/B/C demo shifts) | `UNVERIFIED` |
 | Arc testnet contract | [`0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6`](https://explorer.testnet.arc.io/address/0x39845ad25394ec0a6c15ebc5d8968d9c70bb41a6) | `VERIFIED` |
 | Arc testnet deploy tx | [`0x89b616d…dcfd52`](https://explorer.testnet.arc.io/tx/0x89b616d394bd6b834901e24d3651fd05bdcbe4d84dae64befeb5fc5f40dcfd52) | `VERIFIED` |
 | Contract tests | 76/76 Studio run; six invariants at 256 runs × 128,000 calls | `VERIFIED` |
 | Live-USDC E2E on testnet | Not run with two live wallets | `UNVERIFIED` |
-| Mainnet demo shifts | A/B/C not run | `UNVERIFIED` |
+| Live two-wallet USDC E2E on mainnet | One full shift lifecycle on-chain (shift #1, 0.15 USDC, 2026-10-31) | `VERIFIED` — [E25](arc-pipeline/03-evidence/mainnet-live-e2e.md) |
+| Mainnet demo shifts A/B/C | Replaced by live shift #1; A/B/C plan not executed | `UNRESOLVED` |
 
 ## What it is
 
@@ -111,6 +112,8 @@ Escrow is computed as `hourlyRate × maxSeconds / 3600`, in 6-decimal USDC. Caps
 | E20 | [Builder profile](https://x.com/oxunify) |
 | E23 | [Bytecode analysis](arc-pipeline/04-evidence/bytecode-analysis.json) |
 | E24 | [Mainnet package](arc-pipeline/04-mainnet-package.md) |
+| E25 | [Mainnet live two-wallet E2E](arc-pipeline/03-evidence/mainnet-live-e2e.md) |
+| E26 | [Mainnet live E2E raw RPC data](arc-pipeline/03-evidence/mainnet-live-e2e.json) |
 
 ## Test and deployment evidence
 
@@ -123,6 +126,28 @@ Escrow is computed as `hourlyRate × maxSeconds / 3600`, in 6-decimal USDC. Caps
 - **Live-USDC testnet E2E with two real wallets:** not run. `UNVERIFIED` [E02 §3].
 - **Source verification:** explorer API returned bytecode only, no source/ABI; `verified:false`. `VERIFIED` for the failed attempt; do not call it verified [E15].
 - **Mainnet:** contract `0x2A88dDe461280F5a3Ad959fd6997388409e766a9`, deploy tx `0x9b56fa4…36d98`, block `28736878`; runtime `10,864` bytes, `0x83cd0…bb4a`; Sourcify creation/runtime `exact_match`; at deployment time `usdc()`, `nextShiftId=1`, `totalEscrow=0` passed; `nextShiftId()` is now `2` with shift #1 settled. `VERIFIED` [mainnet-deploy.md](arc-pipeline/03-evidence/mainnet-deploy.md).
+- **Mainnet live two-wallet E2E:** one full lifecycle on-chain (approve → create → clock-in → clock-out → attest → claim → Settled) for shift #1, 0.15 USDC, 2026-10-31; wallet balances reconcile exactly against per-tx gas fees. `VERIFIED` [E25].
+
+## Mainnet proof (live two-wallet E2E)
+
+Everything in this table is read-only RPC evidence from `https://rpc.mainnet.arc.io` (scan `2026-10-31 ~12:11` UTC at block `28,815,019`), documented with links in [E25](arc-pipeline/03-evidence/mainnet-live-e2e.md). No transaction was sent for the check.
+
+| Step | On-chain fact (tx, block UTC) | Status |
+|---|---|---|
+| Approve | employer `0x3211…88d3` approved ShiftProof for exactly `150000` raw (0.15 USDC) — [`0x1d58499b…9e719`](https://explorer.arc.io/tx/0x1d58499b9f9c88d59b826fd37c59a1ca63fe39f99361b1fb252606439309e719), `28,746,059` (02:28:48) | `VERIFIED` |
+| Create shift | `ShiftCreated(1)`: employer/worker, `0.15 USDC/hr`, `3600s`; USDC `150000` moved employer→contract — [`0xd0fee562…3c528`](https://explorer.arc.io/tx/0xd0fee562f840cc303a02f11a2fe771b3a8f4537650d32f07b7cb5e7dd073c528), `28,746,088` (02:29:03) | `VERIFIED` |
+| Clock in | `ClockedIn(1, 02:29:41 UTC)` by worker — [`0x3938a944…18c73`](https://explorer.arc.io/tx/0x3938a9440e6c1afb6a3588b1fdf5ca9c89338d37f98ab34c967a8ddd33518c73), `28,746,163` | `VERIFIED` |
+| Clock out | `ClockedOut(1, 02:29:55 UTC)` by worker — [`0x940951f1…50063`](https://explorer.arc.io/tx/0x940951f1e35dab64e13972ac6f980c9a478f064b2a55aedc230b7fc6efe50063), `28,746,191` | `VERIFIED` |
+| Attest | employer attested `3600`s, owed `150000` — [`0xd4f47eb0…31cf`](https://explorer.arc.io/tx/0xd4f47eb026827032ff39323e49a5eb6996c259e324f15d992bd3931c51cb31cf), `28,746,278` (02:30:39) | `VERIFIED` |
+| Claim | `Claimed(1, 150000)`; USDC `150000` moved contract→worker — [`0x3e8011cf…055e6`](https://explorer.arc.io/tx/0x3e8011cfdaf40ca6510ba8f5cc3f060abdfffb68b4e3645eb886351476f055e6), `28,746,333` (02:31:08) | `VERIFIED` |
+| Settle | `Settled(1)` emitted by the claim tx; `getShift(1)` status `6` (`Settled`), escrow `0`, owed `0` — same tx | `VERIFIED` |
+| Residual refund (`refundUnused`) | no `Refunded` event in the swept range — MISSING (not required: claim paid the full owed) | `MISSING` |
+| Cancel | no `Cancelled` event in the swept range — MISSING | `MISSING` |
+| Multi-shift | `nextShiftId()=2`, `totalEscrow=0`: shift #1 is the only shift created | `VERIFIED` |
+
+Balances (block-anchored `balanceOf`, 6-decimal): employer `0.402131` → `0.245339`; worker `0.05` → `0.197221`; contract `0` → `0.15` → `0`. Every delta closes exactly against `0.15` USDC escrow flows plus per-tx native-gas fees at `20.001` gwei [E25 §4].
+
+Not established by this E2E: independent proof of work — **employer attestation is the trust anchor**; both wallets are builder-controlled by disclosure; no audit has been performed; the optimizer-difference disclosure continues to apply (`Deployment provenance`).
 
 ## Deployment provenance
 
@@ -133,6 +158,8 @@ Escrow is computed as `hourlyRate × maxSeconds / 3600`, in 6-decimal USDC. Caps
 **Remix deployment settings.** solc `0.8.28+commit.7893614a`, EVM `cancun`, optimizer **disabled** (metadata records `runs: 200` but `enabled: false`), metadata bytecode hash `ipfs`, constructor USDC `0x3600000000000000000000000000000000000000`. Sourcify reports `creationMatch: exact_match` and `runtimeMatch: exact_match` for [`0x2A88…66a9`](https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9). The deployed runtime is 10,864 bytes, keccak `0x83cd0dd06d49f7493eda6dea3f2a2042f04d5ba724bcb22a7f41200dce41bb4a`.
 
 **Production deployment.** The mainnet frontend is live at [`https://shiftproof-phi.vercel.app`](https://shiftproof-phi.vercel.app), Vercel deployment `dpl_Bj9PawyUuUnAsytvkAjEoS379Js1`, target `production`, with no deployment protection. It was built with `VITE_NETWORK=mainnet`. All six routes (`/`, `/employer`, `/worker`, `/proof`, `/shift/1`, `/help`) returned HTTP 200 in fresh logged-out browser contexts, with no Vercel authentication, no console errors, no testnet links or text, chain `5042`, and contract `0x2A88…66a9`. `/shift/1` renders a real settled mainnet shift: `0.15 USDC/hr`, `1h`, created `2026-10-31 02:29:03 UTC`.
+
+**Manual E2E status text updates.** After the read-only live mainnet E2E check [E25], the E2E status statements in this README, `/proof` (`app/src/pages/Proof.tsx`), and `app/AGENTS.md` were updated manually to match that evidence. These are **text-only edits**: no contract source, ABI, test, or app logic was changed. The "no audit", "attestation is the trust anchor", and optimizer-difference disclosures are intentionally unchanged.
 
 **What the verifier says.** The read-only verifier's public reads pass, but its frozen-artifact comparison fails: 10,864 != 5,990 bytes, runtime hash `0x83cd…bb4a` != `0x843e…b1e5`, and 5,748 byte positions differ. The deployed contract does **not** match the frozen optimized bytecode. Do not claim that it does. The difference is explained by the optimizer setting, not by a different source.
 
@@ -225,7 +252,7 @@ Gross escrow 35 USDC; gas cap 0.25 USDC; total committed 35.25 USDC, under the 4
 - Public repo and Vercel production deployment are live; video is still a placeholder. `VERIFIED` repo/deployment; `UNRESOLVED` video.
 - Local Foundry tests were not run for this deployment because `forge` and `solc` were unavailable. `UNVERIFIED` local rerun; the recorded Studio run remains 76/76.
 - Sourcify's deployed source is byte-identical to the frozen source except for one trailing newline, so its source hash differs. `VERIFIED`.
-- The app is network-aware: `VITE_NETWORK=testnet` uses the testnet deployment; `VITE_NETWORK=mainnet` uses the mainnet deployment. Mainnet E2E has not been run. `VERIFIED` configuration; `UNVERIFIED` mainnet E2E.
+- The app is network-aware: `VITE_NETWORK=testnet` uses the testnet deployment; `VITE_NETWORK=mainnet` uses the mainnet deployment. One full live mainnet E2E lifecycle (shift #1) is verified on-chain [E25]; shift #1 is the only shift created (`nextShiftId` is `2`). `VERIFIED` configuration and one-shift E2E; multi-shift mainnet behavior `UNVERIFIED`.
 - No `bun.lock`; forge-std commit not pinned; Arc Foundry version not recorded in the artifact. `UNRESOLVED` reproducibility gaps.
 - No audit. Do not imply one. `VERIFIED`.
 

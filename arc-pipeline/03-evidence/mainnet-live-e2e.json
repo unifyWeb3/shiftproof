@@ -1,0 +1,232 @@
+{
+  "latestBlock": "28815019",
+  "testedAt": "2026-10-31T12:11:54.413Z",
+  "blockTimestamps": {
+    "28736878": "2026-10-31T01:11:14Z",
+    "28746059": "2026-10-31T02:28:48Z",
+    "28746088": "2026-10-31T02:29:03Z",
+    "28746163": "2026-10-31T02:29:41Z",
+    "28746191": "2026-10-31T02:29:55Z",
+    "28746278": "2026-10-31T02:30:39Z",
+    "28746333": "2026-10-31T02:31:08Z"
+  },
+  "transactions": [],
+  "transactionsAll": [
+    {
+      "hash": "0x9b56fa49c2c78b78ac24c7f4f154d4825194c6939b05f4e8086a8d5e10336d98",
+      "block": 28736878,
+      "status": "success",
+      "from": "0x3211d1419709682b81c53cc51cb63622e25488d3",
+      "to": null,
+      "fn": "constructor",
+      "gasUsed": 2455856,
+      "logs": 0,
+      "contractAddress": "0x2a88dde461280f5a3ad959fd6997388409e766a9"
+    },
+    {
+      "hash": "0x1d58499b9f9c88d59b826fd37c59a1ca63fe39f99361b1fb252606439309e719",
+      "block": 28746059,
+      "status": "success",
+      "from": "0x3211d1419709682b81c53cc51cb63622e25488d3",
+      "to": "0x3600000000000000000000000000000000000000",
+      "fn": "approve",
+      "gasUsed": 55438,
+      "logs": 1,
+      "contractAddress": null
+    },
+    {
+      "hash": "0xd0fee562f840cc303a02f11a2fe771b3a8f4537650d32f07b7cb5e7dd073c528",
+      "block": 28746088,
+      "status": "success",
+      "from": "0x3211d1419709682b81c53cc51cb63622e25488d3",
+      "to": "0x2a88dde461280f5a3ad959fd6997388409e766a9",
+      "fn": "createShift",
+      "gasUsed": 219216,
+      "logs": 3,
+      "contractAddress": null
+    },
+    {
+      "hash": "0x3938a9440e6c1afb6a3588b1fdf5ca9c89338d37f98ab34c967a8ddd33518c73",
+      "block": 28746163,
+      "status": "success",
+      "from": "0x01dbb77d003835ea87385f36e921531da8effdbb",
+      "to": "0x2a88dde461280f5a3ad959fd6997388409e766a9",
+      "fn": "clockIn",
+      "gasUsed": 36582,
+      "logs": 1,
+      "contractAddress": null
+    },
+    {
+      "hash": "0x940951f1e35dab64e13972ac6f980c9a478f064b2a55aedc230b7fc6efe50063",
+      "block": 28746191,
+      "status": "success",
+      "from": "0x01dbb77d003835ea87385f36e921531da8effdbb",
+      "to": "0x2a88dde461280f5a3ad959fd6997388409e766a9",
+      "fn": "clockOut",
+      "gasUsed": 36748,
+      "logs": 1,
+      "contractAddress": null
+    },
+    {
+      "hash": "0xd4f47eb026827032ff39323e49a5eb6996c259e324f15d992bd3931c51cb31cf",
+      "block": 28746278,
+      "status": "success",
+      "from": "0x3211d1419709682b81c53cc51cb63622e25488d3",
+      "to": "0x2a88dde461280f5a3ad959fd6997388409e766a9",
+      "fn": "attest",
+      "gasUsed": 64933,
+      "logs": 1,
+      "contractAddress": null
+    },
+    {
+      "hash": "0x3e8011cfdaf40ca6510ba8f5cc3f060abdfffb68b4e3645eb886351476f055e6",
+      "block": 28746333,
+      "status": "success",
+      "from": "0x01dbb77d003835ea87385f36e921531da8effdbb",
+      "to": "0x2a88dde461280f5a3ad959fd6997388409e766a9",
+      "fn": "claim",
+      "gasUsed": 65583,
+      "logs": 4,
+      "contractAddress": null
+    }
+  ],
+  "contractEvents": [
+    {
+      "txHash": "0xd0fee562f840cc303a02f11a2fe771b3a8f4537650d32f07b7cb5e7dd073c528",
+      "block": "0x1b6a168",
+      "logIndex": "0x2",
+      "event": "ShiftCreated",
+      "args": {
+        "shiftId": "1",
+        "employer": "0x3211d1419709682b81c53CC51cb63622E25488d3",
+        "worker": "0x01dBB77D003835Ea87385f36E921531DA8EffDbB",
+        "escrow": "150000",
+        "hourlyRate": "150000",
+        "maxSeconds": 3600
+      }
+    },
+    {
+      "txHash": "0x3938a9440e6c1afb6a3588b1fdf5ca9c89338d37f98ab34c967a8ddd33518c73",
+      "block": "0x1b6a1b3",
+      "logIndex": "0x0",
+      "event": "ClockedIn",
+      "args": {
+        "shiftId": "1",
+        "worker": "0x01dBB77D003835Ea87385f36E921531DA8EffDbB",
+        "at": "1793413781"
+      }
+    },
+    {
+      "txHash": "0x940951f1e35dab64e13972ac6f980c9a478f064b2a55aedc230b7fc6efe50063",
+      "block": "0x1b6a1cf",
+      "logIndex": "0x7",
+      "event": "ClockedOut",
+      "args": {
+        "shiftId": "1",
+        "worker": "0x01dBB77D003835Ea87385f36E921531DA8EffDbB",
+        "at": "1793413795"
+      }
+    },
+    {
+      "txHash": "0xd4f47eb026827032ff39323e49a5eb6996c259e324f15d992bd3931c51cb31cf",
+      "block": "0x1b6a226",
+      "logIndex": "0x1",
+      "event": "Attested",
+      "args": {
+        "shiftId": "1",
+        "employer": "0x3211d1419709682b81c53CC51cb63622E25488d3",
+        "attestedSeconds": 3600,
+        "owed": "150000"
+      }
+    },
+    {
+      "txHash": "0x3e8011cfdaf40ca6510ba8f5cc3f060abdfffb68b4e3645eb886351476f055e6",
+      "block": "0x1b6a25d",
+      "logIndex": "0x1e",
+      "event": "Claimed",
+      "args": {
+        "shiftId": "1",
+        "worker": "0x01dBB77D003835Ea87385f36E921531DA8EffDbB",
+        "amount": "150000"
+      }
+    },
+    {
+      "txHash": "0x3e8011cfdaf40ca6510ba8f5cc3f060abdfffb68b4e3645eb886351476f055e6",
+      "block": "0x1b6a25d",
+      "logIndex": "0x1f",
+      "event": "Settled",
+      "args": {
+        "shiftId": "1"
+      }
+    }
+  ],
+  "usdcEvents": [
+    {
+      "txHash": "0x1d58499b9f9c88d59b826fd37c59a1ca63fe39f99361b1fb252606439309e719",
+      "block": "0x1b6a14b",
+      "logIndex": "0xe",
+      "event": "Approval",
+      "args": {
+        "owner": "0x3211d1419709682b81c53CC51cb63622E25488d3",
+        "spender": "0x2A88dDe461280F5a3Ad959fd6997388409e766a9",
+        "value": "150000"
+      }
+    },
+    {
+      "txHash": "0xd0fee562f840cc303a02f11a2fe771b3a8f4537650d32f07b7cb5e7dd073c528",
+      "block": "0x1b6a168",
+      "logIndex": "0x1",
+      "event": "Transfer",
+      "args": {
+        "from": "0x3211d1419709682b81c53CC51cb63622E25488d3",
+        "to": "0x2A88dDe461280F5a3Ad959fd6997388409e766a9",
+        "value": "150000"
+      }
+    },
+    {
+      "txHash": "0x3e8011cfdaf40ca6510ba8f5cc3f060abdfffb68b4e3645eb886351476f055e6",
+      "block": "0x1b6a25d",
+      "logIndex": "0x1d",
+      "event": "Transfer",
+      "args": {
+        "from": "0x2A88dDe461280F5a3Ad959fd6997388409e766a9",
+        "to": "0x01dBB77D003835Ea87385f36E921531DA8EffDbB",
+        "value": "150000"
+      }
+    }
+  ],
+  "balances": {
+    "employer": {
+      "firstTransferBlock": "28746088",
+      "before": "0.401022",
+      "after": "0.245339"
+    },
+    "worker": {
+      "firstTransferBlock": "28746333",
+      "before": "0.048533",
+      "after": "0.197221"
+    },
+    "contract": {
+      "firstTransferBlock": "28746088",
+      "before": "0",
+      "after": "0"
+    }
+  },
+  "state": {
+    "nextShiftId": "2",
+    "totalEscrow": "0",
+    "shift1": {
+      "employer": "0x3211d1419709682b81c53CC51cb63622E25488d3",
+      "worker": "0x01dBB77D003835Ea87385f36E921531DA8EffDbB",
+      "createdAt": "1793413743",
+      "startedAt": "1793413781",
+      "endedAt": "1793413795",
+      "maxSeconds": 3600,
+      "attestedSeconds": 3600,
+      "hourlyRate": "150000",
+      "escrow": "0",
+      "owed": "0",
+      "status": 6
+    }
+  }
+}
