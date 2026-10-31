@@ -157,7 +157,7 @@ export default function Proof() {
           </div>
         ) : (
           <>
-            <InfoRow label="App URL (hosted preview)" value={window.location.origin} link={window.location.origin} />
+            <InfoRow label="App URL" value={window.location.origin} link={window.location.origin} />
             <InfoRow label="Network" value={`${ACTIVE_NETWORK.label} (chain ${ACTIVE_NETWORK.chainId})`} />
             <InfoRow
               label="Live chain ID"
@@ -306,7 +306,7 @@ export default function Proof() {
           />
         )}
         <InfoRow
-          label={`Hosted preview${ACTIVE_NETWORK.isTestnet ? ' (testnet-only)' : ''}`}
+          label={`Hosted app${ACTIVE_NETWORK.isTestnet ? ' (testnet-only)' : ''}`}
           value={window.location.origin}
           link={window.location.origin}
         />

@@ -30,7 +30,21 @@ The mainnet entry in `src/lib/networks.ts` is a manual, data-only edit:
 
 The values come from the verified deployment receipt. Testnet is unchanged. If any of these fields is missing or malformed, `hasContract` evaluates false and all contract reads/writes stay disabled (fail closed).
 
-The mainnet deployment was compiled with optimizer disabled, so its runtime bytecode differs from the optimized 5,990-byte frozen artifact. Sourcify reports an exact source match for creation and runtime. The bytecode difference is a compiler-setting difference, not a source difference.
+### Mainnet deployment provenance
+
+The mainnet contract was deployed manually from Remix using the unchanged `contracts/ShiftProof.sol` source. The mainnet entry in `src/lib/networks.ts` is a manual, data-only edit; testnet is unchanged.
+
+- Remix compiler: `solc 0.8.28+commit.7893614a`, EVM `cancun`.
+- Remix optimizer: **disabled** (metadata records `runs: 200` but `enabled: false`).
+- Metadata bytecode hash: `ipfs`.
+- Constructor USDC: `0x3600000000000000000000000000000000000000`.
+- Sourcify: [creation and runtime `exact_match`](https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9).
+- Deployed runtime: 10,864 bytes, keccak `0x83cd0dd06d49f7493eda6dea3f2a2042f04d5ba724bcb22a7f41200dce41bb4a`.
+- Production app: [shiftproof-phi.vercel.app](https://shiftproof-phi.vercel.app), Vercel deployment `dpl_Bj9PawyUuUnAsytvkAjEoS379Js1` (target `production`, no deployment protection), built with `VITE_NETWORK=mainnet`.
+
+The frozen Studio artifact in `contracts/out/ShiftProof.sol/ShiftProof.json` was built with optimizer **enabled, 200 runs**. Its runtime is 5,990 bytes, keccak `0x843ef44664f6eb7bbbe95c213d6fd60b88d912b3810d087981ab69a94b90b1e5`. The deployed runtime does **not** match it. The read-only verifier exits `1` on the size/hash/exact comparison; this is a compiler-setting difference, not a source difference, and the deployed contract must not be described as matching the frozen optimized bytecode.
+
+Source hash comparison: the local 13,039-byte source hashes to `0x5d5e2edb0e2cea4601933f12b2a59bd4e0424d07375323404e0df5c2813ae3ca`, matching `arc-pipeline/04-mainnet-package.md`. The Sourcify-deployed source is 13,038 bytes and hashes to `0x73e4d9bf3e261cb6aa50e901d4c8fe5e86e5a9b049c949d25cc0f7c170cc0c84` because it lacks the local file's single trailing newline; the Solidity is otherwise identical. Sourcify's exact match establishes that the deployed source compiles to the deployed bytecode with optimizer disabled. It does not establish byte-identical source with the frozen file or bytecode equality with the optimized artifact.
 
 ## Contract files
 

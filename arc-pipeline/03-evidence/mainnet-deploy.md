@@ -71,6 +71,15 @@ The Sourcify source is **13,038 bytes** and is identical to `app/contracts/Shift
 \ No newline at end of file
 ```
 
+Source hash comparison:
+
+| Source | Size | Keccak-256 |
+|---|---|---|
+| Local `app/contracts/ShiftProof.sol` | 13,039 bytes | `0x5d5e2edb0e2cea4601933f12b2a59bd4e0424d07375323404e0df5c2813ae3ca` |
+| Sourcify-deployed source | 13,038 bytes | `0x73e4d9bf3e261cb6aa50e901d4c8fe5e86e5a9b049c949d25cc0f7c170cc0c84` |
+
+The local file's hash matches the source Keccak-256 recorded in `arc-pipeline/04-mainnet-package.md` (`0x5d5e…e3ca`). The Sourcify source differs only by the missing trailing newline, so its hash differs. This comparison establishes that the reviewed local source is the source recorded in the frozen package. It does **not** establish that the Sourcify source is byte-identical to the local file, nor that the deployed bytecode matches the optimized frozen artifact. Sourcify's exact match independently establishes that the deployed source compiles to the deployed creation and runtime bytecode with optimizer disabled.
+
 The ABI entries are a set-equivalent match: 40 entries on both sides, with no function, event, or error signature present on only one side. The app uses the frozen artifact ABI; every callable signature is the same.
 
 ---
@@ -173,7 +182,7 @@ All reads below are from the same RPC and contract.
 | `MAX_SHIFT_SECONDS()` | `86400` | INFO |
 | `MAX_ESCROW()` | `10000000000` | INFO |
 
-These reads confirm that the deployed contract exposes the expected ShiftProof interface and initial state.
+These reads confirm that the deployed contract exposes the expected ShiftProof interface and initial state at deployment time. Since then, shift #1 has been created and settled; the current state is recorded in §12.
 
 ---
 
@@ -262,30 +271,34 @@ const createReady = workerAddrValid && rateRaw > 0n && maxSecs > 0
 | Typecheck (`src` only) | `npx tsc --noEmit -p tsconfig.src-check.json` | PASS, exit `0` |
 | Testnet build | `VITE_NETWORK=testnet npx vite build --outDir /tmp/opencode/dist-testnet-final` | PASS, exit `0`, 6,506 modules |
 | Mainnet build | `VITE_NETWORK=mainnet npx vite build` | PASS, exit `0`, 6,506 modules |
+| Contract tests (Foundry) | No command run | NOT RUN — `forge` and `solc` are not installed; no tools were installed to force the check |
 
 The full-repo typecheck failure is in a pre-existing deployment script, not in `src`. The required `src` typecheck passes. The `tsconfig.src-check.json` file was temporary and was removed after the check.
 
-Both builds emit the same Rollup warnings about third-party `/*#__PURE__*/` comment positions and chunks larger than 500 kB. Neither warning is an error.
+The final post-fix run repeated lint, the `src` typecheck, and the mainnet build after the `/proof` label and favicon changes; all passed. Both builds emit the same Rollup warnings about third-party `/*#__PURE__*/` comment positions and chunks larger than 500 kB. Neither warning is an error.
 
-The browser title was corrected from the hardcoded “ShiftProof — Arc Testnet” to a neutral static title plus a runtime `document.title = "ShiftProof — <network label>"`. On the mainnet preview the title is `ShiftProof — Arc`.
+The local Foundry suite was not run because `forge` and `solc` are unavailable. The recorded Studio run remains 76/76. The repository's `foundry.toml` currently has `optimizer = true` and `optimizer_runs = 200`; a local run would not have matched the Remix optimizer-disabled settings without an override.
+
+The browser title was corrected from the hardcoded “ShiftProof — Arc Testnet” to a neutral static title plus a runtime `document.title = "ShiftProof — <network label>"`. On the mainnet production deployment the title is `ShiftProof — Arc`.
 
 ---
 
-## 9. `/proof` mainnet check
+## 9. Production `/proof` and `/shift/1` checks
 
-The deployed preview was rendered in headless Chromium at:
+The production deployment was rendered in fresh, logged-out headless Chromium contexts at:
 
-`https://shiftproof-pbli3fxwu-oxunify.vercel.app/proof`
+`https://shiftproof-phi.vercel.app/proof`
 
-Rendered title: `ShiftProof — Arc`. Console errors: none.
+Rendered title: `ShiftProof — Arc`. Console errors: none. No Vercel authentication page appeared.
 
-Visible values:
+Visible values (captured after the final production deployment):
 
 | Item | Rendered value |
 |---|---|
+| App URL | `https://shiftproof-phi.vercel.app` |
 | Network | `Arc (chain 5042)` |
 | Live chain ID | `5042` |
-| Live block | `28,742,648` (at check time) |
+| Live block | `28,762,512` (at check time) |
 | Contract | `0x2A88dDe461280F5a3Ad959fd6997388409e766a9` |
 | Deploy tx | `0x9b56...6d98` |
 | Deployment block | `28,736,878` |
@@ -293,7 +306,7 @@ Visible values:
 | Runtime hash | `0x83cd0dd06d49f7493eda6dea3f2a2042f04d5ba724bcb22a7f41200dce41bb4a` |
 | `usdc()` | `0x3600000000000000000000000000000000000000` |
 | USDC `decimals()` | `6` |
-| `nextShiftId()` | `1` |
+| `nextShiftId()` | `2` |
 | `totalEscrow()` | `0.00 USDC` |
 | Sourcify status | `Source verified on Sourcify: exact match` |
 | E2E status | `UNVERIFIED` — no live two-wallet mainnet E2E |
@@ -308,25 +321,42 @@ Rendered links:
 | Sourcify | `https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9` |
 | Public repo | `https://github.com/unifyWeb3/shiftproof` |
 
-The page contains no “testnet only,” “not deployed,” or “No ShiftProof contract” text. The optimizer-disabled explanation is visible. A full-page screenshot was captured at `/tmp/opencode/proof-mainnet.png`.
+The page contains no “testnet only,” “not deployed,” “No ShiftProof contract,” or “Hosted preview” text. It labels the URL “Hosted app.” The optimizer-disabled explanation is visible. A full-page screenshot was captured at `/tmp/opencode/route-_proof.png`.
+
+`/shift/1` rendered a real settled mainnet shift: status `Settled`, `0.15 USDC/hr`, `1h`, escrow `0.00 USDC`, created `2026-10-31 02:29:03 UTC`, clocked in `02:29:41 UTC`, clocked out `02:29:55 UTC`. No wallet was connected.
 
 ---
 
-## 10. Commit, push, and preview deployment
+## 10. Commit, push, and production deployment
 
 | Item | Value |
 |---|---|
 | Build environment | `VITE_NETWORK=mainnet` |
-| Vercel target | Preview (not production) |
-| Preview URL | `https://shiftproof-pbli3fxwu-oxunify.vercel.app` |
-| `/proof` URL | `https://shiftproof-pbli3fxwu-oxunify.vercel.app/proof` |
-| Deployment ID | `dpl_F94YhSdGrbunBHfjnxLdYSbFeWtq` |
-| Inspector | `https://vercel.com/oxunify/shiftproof/F94YhSdGrbunBHfjnxLdYSbFeWtq` |
-| Build result | READY; Vite build completed in 23.95s |
+| Vercel target | Production |
+| Production URL | `https://shiftproof-phi.vercel.app` |
+| Deployment URL | `https://shiftproof-cvnp4goxh-oxunify.vercel.app` |
+| `/proof` URL | `https://shiftproof-phi.vercel.app/proof` |
+| Deployment ID | `dpl_Bj9PawyUuUnAsytvkAjEoS379Js1` |
+| Inspector | `https://vercel.com/oxunify/shiftproof/Bj9PawyUuUnAsytvkAjEoS379Js1` |
+| Deployment protection | none (`deploymentProtection: []`) |
+| Build result | READY |
 
-The deployment was created with `vercel deploy --yes -b VITE_NETWORK=mainnet` from `app/`. It was not promoted to production.
+The deployment was created with `vercel deploy --prod --yes -b VITE_NETWORK=mainnet` from `app/`. It replaced the earlier preview deployment `dpl_F94YhSdGrbunBHfjnxLdYSbFeWtq` at `https://shiftproof-pbli3fxwu-oxunify.vercel.app`, which is superseded.
 
-The integration commit is `6308f1d` (`feat(app): configure Arc mainnet deployment`), pushed to `origin/main` as `befc391..6308f1d`. No unrelated working-tree files were committed.
+Production route checks (fresh logged-out browser context per route, no wallet):
+
+| Route | HTTP | Chain 5042 | Contract shown | Testnet text/links | Console errors |
+|---|---|---|---|---|---|
+| `/` | 200 | yes | yes | none | 0 |
+| `/employer` | 200 | yes | yes | none | 0 |
+| `/worker` | 200 | yes | yes | none | 0 |
+| `/proof` | 200 | yes | yes | none | 0 |
+| `/shift/1` | 200 | yes | yes | none | 0 |
+| `/help` | 200 | yes | yes | none | 0 |
+
+No route redirected to a Vercel login or showed deployment-protection content. The final URLs stayed on `https://shiftproof-phi.vercel.app`.
+
+The integration commit is `6308f1d` (`feat(app): configure Arc mainnet deployment`), pushed to `origin/main` as `befc391..6308f1d`. Final documentation changes are committed in the handoff commit on `origin/main`. No unrelated working-tree files were committed.
 
 ---
 
@@ -334,28 +364,59 @@ The integration commit is `6308f1d` (`feat(app): configure Arc mainnet deploymen
 
 **Done:**
 
-- Verified the new deployment's transaction, receipt, block, address derivation, constructor argument, and runtime code via RPC.
+- Verified the deployment's transaction, receipt, block, address derivation, constructor argument, and runtime code via RPC.
+- Verified `app/src/lib/networks.ts` mainnet values against the recorded evidence and live RPC: contract, block, tx, USDC, chain `5042`, `isConfigured: true`.
 - Confirmed Sourcify creation and runtime `exact_match`.
 - Ran the official read-only verifier unchanged; captured its full output and exit code.
 - Read the public state and caps.
 - Configured mainnet in `app/src/lib/networks.ts` with fail-closed validation.
-- Updated mainnet proof/help copy and both READMEs.
-- Ran lint, `src` typecheck, testnet build, and mainnet build.
-- Rendered the mainnet `/proof` page and checked live values and links.
-- Committed the integration, scanned for secrets, pushed, and deployed a Vercel preview.
+- Updated mainnet proof/help copy, both READMEs, `app/AGENTS.md`, and this evidence file.
+- Ran lint, `src` typecheck, and the mainnet build; all passed after the final UI changes.
+- Rendered the production `/proof` and `/shift/1` pages and checked live values, links, and labels.
+- Fixed the stale `/proof` "hosted preview" labels and added an inline favicon to remove the only console error.
+- Verified all six production routes logged out: HTTP 200, chain `5042`, correct contract, no testnet text/links, no Vercel auth, no console errors.
+- Deployed Vercel production with `VITE_NETWORK=mainnet`.
+- Scanned for secrets, reviewed the diff, committed, and pushed to `origin/main`.
 
 **Not done:**
 
-- No production deployment.
 - No contract change or redeployment.
-- No live two-wallet mainnet E2E, no mainnet demo shifts, and no funding of the contract.
+- No wallet connection, transaction, or on-chain state change by the assistant.
+- No live two-wallet mainnet E2E. Shift #1 predates this deployment work and was not created or modified by it.
 - No audit.
+- No local Foundry test run (`forge` and `solc` unavailable; no tools installed).
 - No fix for the pre-existing full-repo typecheck failure in `scripts/compass-deploy.ts`.
 - No fix for the UI `createReady` escrow-zero edge; it is reported above.
+- No hackathon submission.
 
 ---
 
-## 12. Required follow-ups
+## 12. Current live state (post-deployment read)
+
+Read from `https://rpc.mainnet.arc.io` after the production deployment:
+
+| Read | Value |
+|---|---|
+| Chain ID | `5042` |
+| Latest block | `28,762,501` (RPC read; `/proof` rendered `28,762,512` moments later) |
+| Runtime code | `10,864` bytes, keccak `0x83cd0dd06d49f7493eda6dea3f2a2042f04d5ba724bcb22a7f41200dce41bb4a` |
+| `nextShiftId()` | `2` |
+| `totalEscrow()` | `0` (0.00 USDC) |
+| Shift #1 status | `6` = `Settled` |
+| Shift #1 employer | `0x3211d1419709682b81c53CC51cb63622E25488d3` |
+| Shift #1 worker | `0x01dBB77D003835Ea87385f36E921531DA8EffDbB` |
+| Shift #1 hourly rate | `150000` raw = `0.15` USDC/hr |
+| Shift #1 maxSeconds | `3600` (1h) |
+| Shift #1 attestedSeconds | `3600` |
+| Shift #1 escrow / owed | `0` / `0` |
+| Shift #1 createdAt | `1793413743` = `2026-10-31T02:29:03Z` |
+| Shift #1 startedAt / endedAt | `1793413781` = `02:29:41Z` / `1793413795` = `02:29:55Z` |
+
+These values show that the deployed contract is live and has already processed a shift. They do **not** constitute a two-wallet E2E performed for this deployment: shift #1 was created before this production deployment and this work, and no wallet was connected and no transaction was sent by the assistant.
+
+---
+
+## 13. Required follow-ups
 
 1. Re-run the official verifier with `arc-cast` and, if the project wants a clean `exit 0`, rebuild the frozen artifact with optimizer disabled or redeploy the optimized artifact.
 2. Add `escrowNeeded > 0n` to `createReady` so the UI does not enable a transaction that will revert at the smallest inputs.
