@@ -2,23 +2,13 @@
 
 Pre-funded USDC settlement for hourly shifts on Arc.
 
-[
-
-![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
-
-](LICENSE) [
-
-![network: Arc mainnet](https://img.shields.io/badge/network-Arc%20mainnet-1f2937.svg)
-
-](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) [
-
-![status: unaudited prototype](https://img.shields.io/badge/status-unaudited%20prototype-orange.svg)
-
-](#limitations)
+![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![network: Arc mainnet](https://img.shields.io/badge/network-Arc%20mainnet-1f2937.svg) ![status: unaudited prototype](https://img.shields.io/badge/status-unaudited%20prototype-orange.svg)
 
 ShiftProof is a smart contract for hourly shift settlement. An employer pre-funds USDC for a shift, the worker clocks in and out, the employer attests the hours, and the worker claims the attested amount. The contract enforces who can act and when. It does not prove that work was done: the employer's attestation is the trust anchor.
 
 [live app](https://shiftproof-phi.vercel.app) | [contract on explorer](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | [source on Sourcify](https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | [arc studio project](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | [mainnet proof](#mainnet-proof)
+
+start here: open the live app, then shift 1, then the contract on the explorer.
 
 Built for the Arc Microgrants hackathon (Built with Arc Studio).
 
@@ -34,6 +24,15 @@ Built for the Arc Microgrants hackathon (Built with Arc Studio).
 | compiler | solc 0.8.28, Cancun, optimizer off (see [verify it yourself](#verify-it-yourself)) |
 | status | working prototype, unaudited |
 | license | MIT |
+
+## screens
+
+| screenshot | caption |
+|---|---|
+| ![home page](docs/images/home.png) | Home page, logged out: 1 shift created, 0.00 USDC in escrow, Arc chain 5042. |
+| ![shift 1 page](docs/images/shift-1.png) | Shift #1, status Settled: rate 0.15 USDC per hour, 1 hour maximum, escrow 0.00 USDC. |
+| ![proof page](docs/images/proof.png) | Proof page: deployment facts, live contract state and the verification status list. |
+| ![explorer contract page](docs/images/explorer-contract.png) | Contract page on explorer.arc.io, Transactions tab, six transactions listed. |
 
 ## the problem
 
