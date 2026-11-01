@@ -6,9 +6,9 @@ Pre-funded USDC settlement for hourly shifts on Arc.
 
 ShiftProof is a smart contract for hourly shift settlement. An employer pre-funds USDC for a shift, the worker clocks in and out, the employer attests the hours, and the worker claims the attested amount. The contract enforces who can act and when. It does not prove that work was done: the employer's attestation is the trust anchor.
 
-[live app](https://shiftproof-phi.vercel.app) | [contract on explorer](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | [source on Sourcify](https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | [arc studio project](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | [mainnet proof](#mainnet-proof)
+[live app](https://shiftproof-phi.vercel.app) | [demo video](https://youtu.be/q1u0iRTCy8c) | [contract on explorer](https://explorer.arc.io/address/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | [source on Sourcify](https://repo.sourcify.dev/5042/0x2A88dDe461280F5a3Ad959fd6997388409e766a9) | [arc studio project](https://studio.arc.io/app/35650d11-57a8-4743-8c23-a6bfe1a02f39) | [mainnet proof](#mainnet-proof)
 
-start here: open the live app, then shift 1, then the contract on the explorer.
+start here: watch the [demo video](https://youtu.be/q1u0iRTCy8c), then open the live app, then shift 1, then the contract on the explorer.
 
 Built for the Arc Microgrants hackathon (Built with Arc Studio).
 

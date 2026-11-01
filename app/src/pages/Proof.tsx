@@ -1,5 +1,5 @@
 /**
- * /proof — Submission / judge page.
+ * /proof: Submission / judge page.
  * Shows deployment facts, live chain reads, and verification status.
  * No write operations. No wallet required.
  */
@@ -107,7 +107,7 @@ function useLiveChain(): LiveData & { loading: boolean } {
 export default function Proof() {
   const live = useLiveChain()
 
-  // Contract reads — only when deployed
+  // Contract reads: only when deployed
   const { data: usdcAddr, isError: usdcAddrError } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI, functionName: 'usdc',
     chainId: CHAIN_ID, query: { enabled: hasContract },
@@ -146,13 +146,13 @@ export default function Proof() {
       {/* Network / Deployment */}
       <section className="rounded-3xl p-5" style={glass}>
         <h2 className="font-semibold text-sm mb-3" style={{ color: 'var(--ink)' }}>
-          Deployment — {ACTIVE_NETWORK.label}
+          Deployment: {ACTIVE_NETWORK.label}
         </h2>
 
         {notDeployed ? (
           <div className="rounded-xl px-4 py-3 text-center"
             style={{ background: 'rgba(186,43,76,0.07)', color: 'var(--danger)' }}>
-            <p className="text-sm font-semibold">{ACTIVE_NETWORK.label} — not deployed</p>
+            <p className="text-sm font-semibold">{ACTIVE_NETWORK.label}: not deployed</p>
             <p className="mt-1 text-xs">Not deployed on this network. No contract data is shown.</p>
           </div>
         ) : (
@@ -310,7 +310,11 @@ export default function Proof() {
           value={window.location.origin}
           link={window.location.origin}
         />
-        <InfoRow label="Demo video" value="Not recorded" />
+        <InfoRow
+          label="Demo video"
+          value="youtu.be/q1u0iRTCy8c"
+          link="https://youtu.be/q1u0iRTCy8c"
+        />
         <InfoRow label="Architecture doc" value="README.md and AGENTS.md in the repo" />
       </section>
 
@@ -345,7 +349,7 @@ export default function Proof() {
             ? 'Live-USDC E2E with two real wallets has not been run on testnet. Fork tests used MockUSDC.'
             : 'One full live mainnet E2E lifecycle is verified on-chain (shift #1, 0.15 USDC; see the README proof table). Employer attestation remains the trust anchor; not audited.'}</li>
           <li>Fork test hashes are NOT real transaction hashes and are not listed here.</li>
-          <li>Employer attestation is the trust anchor — there is no trustless verification of hours worked.</li>
+          <li>Employer attestation is the trust anchor: there is no trustless verification of hours worked.</li>
           <li>No dispute path. Disputes must be resolved off-chain before attestation.</li>
           <li>No backend, no indexer, no admin, no upgrade mechanism, no fees.</li>
           <li>No audit has been performed.</li>
